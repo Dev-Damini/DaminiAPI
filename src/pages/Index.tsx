@@ -844,6 +844,9 @@ const CATEGORIES: CategoryMeta[] = [
 
 const EDGE = import.meta.env.VITE_EDGE_URL ?? 'https://mxcbspvyqeckbkbomxcb.backend.onspace.ai/functions/v1';
 
+// Backend (Node.js proxy on Render) — update this single string when adding a custom domain
+const BACKEND_BASE = import.meta.env.VITE_BACKEND_BASE ?? 'https://daminiapi-1.onrender.com';
+
 export default function Index() {
   const [search, setSearch]           = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryId>('overview');
@@ -881,16 +884,16 @@ export default function Index() {
     { id: 'claude-pro',     methods: ['POST'], path: '/api/ai/claude-pro',     title: 'Claude Pro',            description: 'Premium reasoning, nuanced writing, and deep comprehension. Supports vision via image attachment.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Analyse this concept.", "model_id": 7 }', tester: { type: 'chat', modelId: 7 }, keywords: 'claude pro reasoning vision chat ai' },
     { id: 'deepseek-v3',    methods: ['POST'], path: '/api/ai/deepseek-v3',    title: 'DeepSeek V3.2',         description: 'Deep analytical intelligence. Excels at mathematics, code generation, and structured reasoning. Supports vision.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Solve this math problem.", "model_id": 8 }', tester: { type: 'chat', modelId: 8 }, keywords: 'deepseek v3 math code vision chat ai' },
     { id: 'claude-std',     methods: ['POST'], path: '/api/ai/claude',         title: 'Standard Claude',       description: 'Reliable, thoughtful responses. Great for writing assistance, Q&A, and summarisation tasks.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Summarise this.", "model_id": 9 }', tester: { type: 'chat', modelId: 9 }, keywords: 'claude standard writing qa chat ai' },
-    { id: 'blackbox',   methods: ['GET'], path: '/blackbox',  title: 'Blackbox Core',        description: 'Conversational AI engine optimised for coding, debugging, and technical explanations. Returns result string.', codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/blackbox?q=Hello" }`, tester: { type: 'get', baseUrl: `${dynamicBase}/blackbox`,    params: [{ key: 'q', label: 'PROMPT',        placeholder: 'What is recursion?',           required: true }] }, keywords: 'blackbox ai coding chat' },
-    { id: 'meta-ai',    methods: ['GET'], path: '/metaai',    title: 'Llama Meta AI',        description: 'Meta conversational AI running on Llama architecture. Returns natural language response string.',                codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/metaai?q=Hello" }`,          tester: { type: 'get', baseUrl: `${dynamicBase}/metaai`,      params: [{ key: 'q', label: 'PROMPT',        placeholder: 'Tell me a joke.',              required: true }] }, keywords: 'meta ai llama chat' },
-    { id: 'perplexity', methods: ['GET'], path: '/perplexity', title: 'Perplexity Search',    description: 'Web-searched responses with cited sources. Returns result summary plus sources array with links and titles.',   codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/perplexity?q=Latest AI breakthroughs" }`, tester: { type: 'get', baseUrl: `${dynamicBase}/perplexity`,  params: [{ key: 'q', label: 'SEARCH QUERY', placeholder: 'Latest AI breakthroughs 2025', required: true }] }, keywords: 'perplexity search web citations ai' },
+    { id: 'blackbox',   methods: ['GET'], path: '/blackbox',  title: 'Blackbox Core',        description: 'Conversational AI engine optimised for coding, debugging, and technical explanations. Returns result string.', codeEndpointUrl: `${BACKEND_BASE}/blackbox`, codeBody: `{ "url": "${BACKEND_BASE}/blackbox?q=Hello" }`, tester: { type: 'get', baseUrl: `${BACKEND_BASE}/blackbox`,    params: [{ key: 'q', label: 'PROMPT',        placeholder: 'What is recursion?',           required: true }] }, keywords: 'blackbox ai coding chat' },
+    { id: 'meta-ai',    methods: ['GET'], path: '/metaai',    title: 'Llama Meta AI',        description: 'Meta conversational AI running on Llama architecture. Returns natural language response string.',                codeEndpointUrl: `${BACKEND_BASE}/metaai`, codeBody: `{ "url": "${BACKEND_BASE}/metaai?q=Hello" }`,          tester: { type: 'get', baseUrl: `${BACKEND_BASE}/metaai`,      params: [{ key: 'q', label: 'PROMPT',        placeholder: 'Tell me a joke.',              required: true }] }, keywords: 'meta ai llama chat' },
+    { id: 'perplexity', methods: ['GET'], path: '/perplexity', title: 'Perplexity Search',    description: 'Web-searched responses with cited sources. Returns result summary plus sources array with links and titles.',   codeEndpointUrl: `${BACKEND_BASE}/perplexity`, codeBody: `{ "url": "${BACKEND_BASE}/perplexity?q=Latest AI breakthroughs" }`, tester: { type: 'get', baseUrl: `${BACKEND_BASE}/perplexity`,  params: [{ key: 'q', label: 'SEARCH QUERY', placeholder: 'Latest AI breakthroughs 2025', required: true }] }, keywords: 'perplexity search web citations ai' },
   ];
 
   // AI IMAGE
   const aiImageEps: EndpointDef[] = [
     { id: 'nano-banana',  methods: ['POST'], path: '/api/image/nano-banana', title: 'Nano Banana Generator', description: 'Fast AI image generation engine. Returns a high-quality hosted image URL from a text prompt.', codeEndpointUrl: `${EDGE}/damini-image`, codeBody: '{ "prompt": "A futuristic city at night", "engine": "nano-banana" }', tester: { type: 'image', engine: 'nano-banana' }, keywords: 'image generation nano banana art' },
     { id: 'flux-pro',    methods: ['POST'], path: '/api/image/flux-pro',    title: 'Flux Pro Generator',    description: 'Professional high-fidelity image generation. Ideal for product visuals, creative work, and detailed scenes.', codeEndpointUrl: `${EDGE}/damini-image`, codeBody: '{ "prompt": "Cinematic portrait in golden hour", "engine": "flux-pro" }', tester: { type: 'image', engine: 'flux-pro' }, keywords: 'flux pro image generation professional' },
-    { id: 'writecream',  methods: ['GET'],  path: '/writecream',            title: 'Writecream Image Generator', description: 'Text-to-image generation engine. Returns a direct URL to the generated canvas resource.', codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/writecream?prompt=A dragon flying" }`, tester: { type: 'get', baseUrl: `${dynamicBase}/writecream`, params: [{ key: 'prompt', label: 'IMAGE DESCRIPTION', placeholder: 'A dragon flying over a futuristic city', required: true }] }, keywords: 'writecream image generate art ai' },
+    { id: 'writecream',  methods: ['GET'],  path: '/writecream',            title: 'Writecream Image Generator', description: 'Text-to-image generation engine. Returns a direct URL to the generated canvas resource.', codeEndpointUrl: `${BACKEND_BASE}/writecream`, codeBody: `{ "url": "${BACKEND_BASE}/writecream?prompt=A dragon flying" }`, tester: { type: 'get', baseUrl: `${BACKEND_BASE}/writecream`, params: [{ key: 'prompt', label: 'IMAGE DESCRIPTION', placeholder: 'A dragon flying over a futuristic city', required: true }] }, keywords: 'writecream image generate art ai' },
   ];
 
   // AI MUSIC
@@ -904,8 +907,8 @@ export default function Index() {
     {
       id: 'mubert', methods: ['GET'], path: '/mubert', title: 'Mubert Music Composer',
       description: 'AI-generated ambient and genre music. Specify mood or genre and duration in seconds. Returns a hosted audio track link.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/mubert?prompt=Lo-fi&duration=30" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/mubert`, params: [
+      codeEndpointUrl: `${BACKEND_BASE}/mubert`, codeBody: `{ "url": "${BACKEND_BASE}/mubert?prompt=Lo-fi&duration=30" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/mubert`, params: [
         { key: 'prompt', label: 'GENRE / MOOD', placeholder: 'Lo-fi chill', required: true },
         { key: 'duration', label: 'DURATION (seconds)', placeholder: '30' },
       ]},
@@ -918,8 +921,8 @@ export default function Index() {
     {
       id: 'tts-standard', methods: ['GET'], path: '/api/ai/tts', title: 'Standard TTS Engine',
       description: 'Text-to-speech synthesis from a text prompt. Returns an audio/mpeg stream or available voice model list.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/ai/tts?text=Hello" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/api/ai/tts`, params: [
+      codeEndpointUrl: `${BACKEND_BASE}/api/ai/tts`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/tts?text=Hello" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/tts`, params: [
         { key: 'text', label: 'TEXT', placeholder: 'Hello, this is a test.', required: true },
       ]},
       keywords: 'tts text speech voice audio stream',
@@ -927,8 +930,8 @@ export default function Index() {
     {
       id: 'tts-premium', methods: ['GET'], path: '/api/ai/text2speech-v3', title: 'Premium Multi-Voice TTS',
       description: 'High-fidelity voice synthesis with six selectable voices. Options: woman1–3, man1–3. Returns a hosted audio link.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/ai/text2speech-v3?text=Hello&voice=woman1" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/api/ai/text2speech-v3`, params: [
+      codeEndpointUrl: `${BACKEND_BASE}/api/ai/text2speech-v3`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/text2speech-v3?text=Hello&voice=woman1" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/text2speech-v3`, params: [
         { key: 'text',  label: 'TEXT',  placeholder: 'Hello, this is a test.', required: true },
         { key: 'voice', label: 'VOICE (woman1/woman2/woman3/man1/man2/man3)', placeholder: 'woman1' },
       ]},
@@ -937,8 +940,8 @@ export default function Index() {
     {
       id: 'tts-rachel', methods: ['GET'], path: '/api/ai/text2speech-v3?voice=woman1', title: 'ElevenLabs — Rachel',
       description: 'Preset: Rachel. Warm, articulate female voice. Ideal for narration, virtual assistants, and professional announcements.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/ai/text2speech-v3?text=Hello&voice=woman1" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/api/ai/text2speech-v3`, params: [
+      codeEndpointUrl: `${BACKEND_BASE}/api/ai/text2speech-v3`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/text2speech-v3?text=Hello&voice=woman1" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/text2speech-v3`, params: [
         { key: 'text',  label: 'TEXT',  placeholder: 'Hello, I am Rachel.', required: true },
         { key: 'voice', label: 'VOICE (locked: woman1)', placeholder: 'woman1' },
       ]},
@@ -947,8 +950,8 @@ export default function Index() {
     {
       id: 'tts-drew', methods: ['GET'], path: '/api/ai/text2speech-v3?voice=man1', title: 'ElevenLabs — Drew',
       description: 'Preset: Drew. Deep, confident male voice. Best suited for podcasts, tutorials, and corporate content.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/ai/text2speech-v3?text=Hello&voice=man1" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/api/ai/text2speech-v3`, params: [
+      codeEndpointUrl: `${BACKEND_BASE}/api/ai/text2speech-v3`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/text2speech-v3?text=Hello&voice=man1" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/text2speech-v3`, params: [
         { key: 'text',  label: 'TEXT',  placeholder: 'Hello, I am Drew.', required: true },
         { key: 'voice', label: 'VOICE (locked: man1)', placeholder: 'man1' },
       ]},
@@ -957,8 +960,8 @@ export default function Index() {
     {
       id: 'tts-clyde', methods: ['GET'], path: '/api/ai/text2speech-v3?voice=man2', title: 'ElevenLabs — Clyde',
       description: 'Preset: Clyde. Expressive, energetic male voice. Great for gaming, entertainment, and dynamic content.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/ai/text2speech-v3?text=Hello&voice=man2" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/api/ai/text2speech-v3`, params: [
+      codeEndpointUrl: `${BACKEND_BASE}/api/ai/text2speech-v3`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/text2speech-v3?text=Hello&voice=man2" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/text2speech-v3`, params: [
         { key: 'text',  label: 'TEXT',  placeholder: 'Hello, I am Clyde.', required: true },
         { key: 'voice', label: 'VOICE (locked: man2)', placeholder: 'man2' },
       ]},
@@ -967,8 +970,8 @@ export default function Index() {
     {
       id: 'tts-paul', methods: ['GET'], path: '/api/ai/text2speech-v3?voice=man3', title: 'ElevenLabs — Paul',
       description: 'Preset: Paul. Calm, authoritative male voice. Excellent for audiobooks, news reading, and documentary narration.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/ai/text2speech-v3?text=Hello&voice=man3" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/api/ai/text2speech-v3`, params: [
+      codeEndpointUrl: `${BACKEND_BASE}/api/ai/text2speech-v3`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/text2speech-v3?text=Hello&voice=man3" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/text2speech-v3`, params: [
         { key: 'text',  label: 'TEXT',  placeholder: 'Hello, I am Paul.', required: true },
         { key: 'voice', label: 'VOICE (locked: man3)', placeholder: 'man3' },
       ]},
@@ -981,22 +984,22 @@ export default function Index() {
     {
       id: 'anime-schedule', methods: ['GET'], path: '/anime-schedule', title: 'Airing Calendar',
       description: 'Get the airing schedule for a given weekday. Returns titles, timestamps, and cover artwork strings.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/anime-schedule?day=monday" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/anime-schedule`, params: [{ key: 'day', label: 'WEEKDAY', placeholder: 'monday', required: true }] },
+      codeEndpointUrl: `${BACKEND_BASE}/anime-schedule`, codeBody: `{ "url": "${BACKEND_BASE}/anime-schedule?day=monday" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/anime-schedule`, params: [{ key: 'day', label: 'WEEKDAY', placeholder: 'monday', required: true }] },
       keywords: 'anime schedule airing weekday episode list calendar',
     },
     {
       id: 'anime-character', methods: ['GET'], path: '/anime-character', title: 'Character Database',
       description: 'Search any anime character by name. Returns name details, biography data, and illustration URLs.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/anime-character?name=Naruto" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/anime-character`, params: [{ key: 'name', label: 'CHARACTER NAME', placeholder: 'Naruto', required: true }] },
+      codeEndpointUrl: `${BACKEND_BASE}/anime-character`, codeBody: `{ "url": "${BACKEND_BASE}/anime-character?name=Naruto" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/anime-character`, params: [{ key: 'name', label: 'CHARACTER NAME', placeholder: 'Naruto', required: true }] },
       keywords: 'anime character search biography illustration database',
     },
     {
       id: 'anime-meta', methods: ['GET'], path: '/anime', title: 'Series Catalog Search',
       description: 'Full series metadata by title. Returns English/Japanese title, episode count, rating, status, and synopsis.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/anime?name=Attack on Titan" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/anime`, params: [{ key: 'name', label: 'SERIES TITLE', placeholder: 'Attack on Titan', required: true }] },
+      codeEndpointUrl: `${BACKEND_BASE}/anime`, codeBody: `{ "url": "${BACKEND_BASE}/anime?name=Attack on Titan" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/anime`, params: [{ key: 'name', label: 'SERIES TITLE', placeholder: 'Attack on Titan', required: true }] },
       keywords: 'anime series metadata title synopsis rating episodes catalog',
     },
   ];
@@ -1012,8 +1015,8 @@ export default function Index() {
     {
       id: 'spotify', methods: ['GET'], path: '/api/Search/Spotify', title: 'Spotify Search',
       description: 'Search Spotify tracks by title. Returns top_results array with type, id, uri, URL, name, and images.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/Search/Spotify?action=search&query=Bohemian Rhapsody" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/api/Search/Spotify`, params: [
+      codeEndpointUrl: `${BACKEND_BASE}/api/Search/Spotify`, codeBody: `{ "url": "${BACKEND_BASE}/api/Search/Spotify?action=search&query=Bohemian Rhapsody" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/Search/Spotify`, params: [
         { key: 'action', label: 'ACTION', placeholder: 'search' },
         { key: 'query', label: 'SONG TITLE', placeholder: 'Bohemian Rhapsody', required: true },
       ]},
@@ -1022,8 +1025,8 @@ export default function Index() {
     {
       id: 'soundcloud', methods: ['GET'], path: '/api/Search/soundcloud', title: 'SoundCloud Search',
       description: 'Search SoundCloud for tracks. Returns count and result array of track objects.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/Search/soundcloud?query=Lo-fi" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/api/Search/soundcloud`, params: [{ key: 'query', label: 'TRACK / ARTIST', placeholder: 'Lo-fi beats', required: true }] },
+      codeEndpointUrl: `${BACKEND_BASE}/api/Search/soundcloud`, codeBody: `{ "url": "${BACKEND_BASE}/api/Search/soundcloud?query=Lo-fi" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/Search/soundcloud`, params: [{ key: 'query', label: 'TRACK / ARTIST', placeholder: 'Lo-fi beats', required: true }] },
       keywords: 'soundcloud track search music audio',
     },
   ];
@@ -1033,8 +1036,8 @@ export default function Index() {
     {
       id: 'fake-tweet', methods: ['GET'], path: '/api/Maker/fake-tweet', title: 'Fake Tweet Creator',
       description: 'Generate a realistic fake tweet image. Specify display name, username, tweet text, avatar URL, and verified status.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/Maker/fake-tweet?name=Elon&username=elonmusk&comment=Hello+world&verified=true" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/api/Maker/fake-tweet`, params: [
+      codeEndpointUrl: `${BACKEND_BASE}/api/Maker/fake-tweet`, codeBody: `{ "url": "${BACKEND_BASE}/api/Maker/fake-tweet?name=Elon&username=elonmusk&comment=Hello+world&verified=true" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/Maker/fake-tweet`, params: [
         { key: 'name',     label: 'DISPLAY NAME',       placeholder: 'Elon Musk',     required: true },
         { key: 'username', label: 'USERNAME',            placeholder: 'elonmusk',      required: true },
         { key: 'comment',  label: 'TWEET TEXT',          placeholder: 'This is a test tweet.' },
@@ -1050,8 +1053,8 @@ export default function Index() {
     {
       id: 'webpilot', methods: ['GET'], path: '/api/ai/Ai-research', title: 'WebPilot Deep Research',
       description: 'Deep web research with source citations. Returns a result summary and sources array containing links and page titles.',
-      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/ai/Ai-research?message=Elon+Musk" }`,
-      tester: { type: 'get', baseUrl: `${dynamicBase}/api/ai/Ai-research`, params: [{ key: 'message', label: 'RESEARCH QUERY', placeholder: 'Elon Musk latest projects', required: true }] },
+      codeEndpointUrl: `${BACKEND_BASE}/api/ai/Ai-research`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/Ai-research?message=Elon+Musk" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/Ai-research`, params: [{ key: 'message', label: 'RESEARCH QUERY', placeholder: 'Elon Musk latest projects', required: true }] },
       keywords: 'webpilot research web search ai sources citations deep',
     },
   ];

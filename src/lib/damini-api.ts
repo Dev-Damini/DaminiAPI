@@ -204,10 +204,42 @@ export async function generateMusic(prompt: string): Promise<{ response: DaminiR
   };
 }
 
-// ─── GENERIC GET PROXY (OmegaTech / David Cyril) ───────────────────────────────
+// Render backend base — kept in sync with the BACKEND_BASE constant in Index.tsx
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE ?? 'https://daminiapi-1.onrender.com';
+
+// ─── GENERIC GET PROXY ────────────────────────────────────────────────────────
+// Routes directly to the Render backend when the target URL lives there;
+// falls back to the Supabase damini-proxy edge function for all other URLs.
 export async function proxyGet(targetUrl: string): Promise<{ data: unknown; status: number }> {
   console.log('[Daminī Proxy] GET:', targetUrl.slice(0, 100));
 
+  // ── Direct fetch for Render backend endpoints (CORS already enabled) ─────
+  if (targetUrl.startsWith(BACKEND_BASE_URL)) {
+    try {
+      const res = await fetch(targetUrl, {
+        method: 'GET',
+        headers: { Accept: 'application/json, */*' },
+      });
+      const contentType = res.headers.get('content-type') ?? '';
+
+      // Binary audio — return a stream_url wrapper
+      if (contentType.includes('audio') || contentType.includes('octet-stream')) {
+        return { data: { stream_url: targetUrl, content_type: contentType }, status: 200 };
+      }
+
+      const text = await res.text();
+      let parsed: unknown;
+      try { parsed = JSON.parse(text); } catch { parsed = { result: text, raw: true }; }
+
+      if (!res.ok) return { data: parsed, status: res.status };
+      return { data: parsed, status: 200 };
+    } catch (err) {
+      console.error('[Daminī Proxy] Direct fetch error:', err);
+      return { data: { error: String(err) }, status: 500 };
+    }
+  }
+
+  // ── Supabase edge function proxy for all other origins ────────────────────
   const { data, error } = await supabase.functions.invoke('damini-proxy', {
     body: { url: targetUrl },
   });
