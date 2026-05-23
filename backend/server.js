@@ -107,7 +107,6 @@ app.get('/', (req, res) => {
 // 1. Gemini TTS & Anime / ElevenLabs Core Fix
 app.get('/api/ai/tts', async (req, res) => {
   try {
-    // Directly mapping frontend values to ensure it hits the correct processing key
     const text = req.query.text || req.query.q || '';
     const upstream = await axios.get(`${SOURCE_OMEGA}/api/ai/Gemini-tts`, { 
       ...axiosOpts, 
@@ -143,13 +142,20 @@ app.get('/api/Search/Spotify', async (req, res) => {
 //   CATEGORY 2 — ADVANCED RESEARCH & AGENTS (CYRIL RE-ROUTED PATHS)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 4. WebPilot Dynamic Web Search (Fixed endpoint query target mapping)
+// 4. WebPilot Dynamic Web Search (FIXED: Handles query tracking cleanly)
 app.get('/api/ai/Ai-research', async (req, res) => {
   try {
-    const queryTerm = req.query.q || req.query.query || req.query.text || '';
+    const queryTerm = req.query.query || req.query.q || req.query.text || '';
+    if (!queryTerm) {
+      return res.status(200).json({
+        creator: "Dev Daminī",
+        success: false,
+        message: "Provide ?query="
+      });
+    }
     const upstream = await axios.get(`${SOURCE_CYRIL}/ai/webpilot`, { 
       ...axiosOpts, 
-      params: { text: queryTerm } // Remapped to query text string format
+      params: { query: queryTerm }
     });
     res.status(200).json(scrubAndSanitise(upstream.data, 'WebPilot research engine node down'));
   } catch (err) {
@@ -157,7 +163,7 @@ app.get('/api/ai/Ai-research', async (req, res) => {
   }
 });
 
-// 5. Blackbox Intelligence Core (Path realignment)
+// 5. Blackbox Intelligence Core
 app.get('/blackbox', async (req, res) => {
   try {
     const queryTerm = req.query.q || req.query.query || '';
@@ -171,7 +177,7 @@ app.get('/blackbox', async (req, res) => {
   }
 });
 
-// 6. Llama Meta AI System Route (Fixed parameter mapping to ?text=)
+// 6. Llama Meta AI System Route
 app.get('/metaai', async (req, res) => {
   try {
     const queryTerm = req.query.q || req.query.query || '';
@@ -185,7 +191,7 @@ app.get('/metaai', async (req, res) => {
   }
 });
 
-// 7. Perplexity Conversational Search Engine (Swapped target query logic)
+// 7. Perplexity Conversational Search Engine
 app.get('/perplexity', async (req, res) => {
   try {
     const queryTerm = req.query.q || req.query.query || '';
@@ -203,7 +209,7 @@ app.get('/perplexity', async (req, res) => {
 //   CATEGORY 3 — MUSIC & HIGH-TIER IMAGE GENERATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 8. Suno Track Engine Creator (Patched directory path routing structure)
+// 8. Suno Track Engine Creator
 app.get('/api/ai/suno', async (req, res) => {
   try {
     const params = {
@@ -217,7 +223,7 @@ app.get('/api/ai/suno', async (req, res) => {
   }
 });
 
-// 9. Flux Pro / damini-image (Forced Global Parameter alignment)
+// 9. Flux Pro / damini-image
 app.get('/api/ai/damini-image', async (req, res) => {
   try {
     const imagePrompt = req.query.prompt || req.query.q || '';
@@ -228,7 +234,7 @@ app.get('/api/ai/damini-image', async (req, res) => {
         'Api-Key': 'flux-pro-secure-token-global',
         Accept: 'application/json, */*'
       },
-      params: { text: imagePrompt } // Fixed query map variant
+      params: { text: imagePrompt }
     });
     res.status(200).json(scrubAndSanitise(upstream.data, 'Flux Pro base engine connection dropped'));
   } catch (err) {
@@ -236,17 +242,17 @@ app.get('/api/ai/damini-image', async (req, res) => {
   }
 });
 
-// 10. Writecream / Whitecream Text-To-Image Node
+// 10. Writecream AI Core Text Engine (FIXED: Updated to process text, not canvas images)
 app.get('/writecream', async (req, res) => {
   try {
-    const imagePrompt = req.query.text || req.query.prompt || req.query.q || '';
+    const textPrompt = req.query.text || req.query.prompt || req.query.q || '';
     const upstream = await axios.get(`${SOURCE_CYRIL}/ai/writecream`, { 
       ...axiosOpts, 
-      params: { text: imagePrompt } 
+      params: { text: textPrompt } 
     });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Canvas image generation out of bounds'));
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Writecream text engine out of bounds'));
   } catch (err) {
-    sendCleanError(res, err, 'Canvas image generation out of bounds');
+    sendCleanError(res, err, 'Writecream text engine out of bounds');
   }
 });
 
@@ -276,24 +282,42 @@ app.get('/api/Maker/fake-tweet', async (req, res) => {
 //   CATEGORY 4 — ANIME EXTRACTOR AGENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 12. Combined Dynamic Anime Router Paths (Forced Scrubbing)
+// 12. Combined Dynamic Anime Router Paths (FIXED: Direct param mapping for ID and Search queries)
 app.get(['/anime-schedule', '/anime-character', '/anime'], async (req, res) => {
   let subPath = '';
   let fallbackMsg = '';
+  let params = {};
 
   if (req.path === '/anime-schedule') {
     subPath = '/anime/schedule';
     fallbackMsg = 'Schedule parsing timeout';
+    params = req.query;
   } else if (req.path === '/anime-character') {
     subPath = '/anime/characters';
     fallbackMsg = 'Character registry query fault';
+    params = { id: req.query.id || req.query.q || '' };
+    if (!params.id) {
+      return res.status(200).json({
+        creator: "Dev Daminī",
+        success: false,
+        message: "Provide a MyAnimeList anime ID via `id` parameter."
+      });
+    }
   } else {
     subPath = '/anime/search';
     fallbackMsg = 'Catalog engine lookup failure';
+    params = { q: req.query.q || req.query.query || '' };
+    if (!params.q) {
+      return res.status(200).json({
+        creator: "Dev Daminī",
+        success: false,
+        message: "Provide a search query via `q` parameter."
+      });
+    }
   }
 
   try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}${subPath}`, { ...axiosOpts, params: req.query });
+    const upstream = await axios.get(`${SOURCE_CYRIL}${subPath}`, { ...axiosOpts, params });
     res.status(200).json(scrubAndSanitise(upstream.data, fallbackMsg));
   } catch (err) {
     sendCleanError(res, err, fallbackMsg);
