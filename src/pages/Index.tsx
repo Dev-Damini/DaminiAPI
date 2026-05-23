@@ -842,7 +842,7 @@ const CATEGORIES: CategoryMeta[] = [
   { id: 'tempmail',  icon: Mail,         label: 'Temp Mail'   },
 ];
 
-const EDGE = 'https://mxcbspvyqeckbkbomxcb.backend.onspace.ai/functions/v1';
+const EDGE = import.meta.env.VITE_EDGE_URL ?? 'https://mxcbspvyqeckbkbomxcb.backend.onspace.ai/functions/v1';
 
 export default function Index() {
   const [search, setSearch]           = useState('');
@@ -933,6 +933,46 @@ export default function Index() {
         { key: 'voice', label: 'VOICE (woman1/woman2/woman3/man1/man2/man3)', placeholder: 'woman1' },
       ]},
       keywords: 'tts premium multi voice text speech audio woman man',
+    },
+    {
+      id: 'tts-rachel', methods: ['GET'], path: '/api/ai/text2speech-v3?voice=woman1', title: 'ElevenLabs — Rachel',
+      description: 'Preset: Rachel. Warm, articulate female voice. Ideal for narration, virtual assistants, and professional announcements.',
+      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/ai/text2speech-v3?text=Hello&voice=woman1" }`,
+      tester: { type: 'get', baseUrl: `${dynamicBase}/api/ai/text2speech-v3`, params: [
+        { key: 'text',  label: 'TEXT',  placeholder: 'Hello, I am Rachel.', required: true },
+        { key: 'voice', label: 'VOICE (locked: woman1)', placeholder: 'woman1' },
+      ]},
+      keywords: 'elevenlabs rachel voice tts female woman1 audio speech',
+    },
+    {
+      id: 'tts-drew', methods: ['GET'], path: '/api/ai/text2speech-v3?voice=man1', title: 'ElevenLabs — Drew',
+      description: 'Preset: Drew. Deep, confident male voice. Best suited for podcasts, tutorials, and corporate content.',
+      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/ai/text2speech-v3?text=Hello&voice=man1" }`,
+      tester: { type: 'get', baseUrl: `${dynamicBase}/api/ai/text2speech-v3`, params: [
+        { key: 'text',  label: 'TEXT',  placeholder: 'Hello, I am Drew.', required: true },
+        { key: 'voice', label: 'VOICE (locked: man1)', placeholder: 'man1' },
+      ]},
+      keywords: 'elevenlabs drew voice tts male man1 audio speech',
+    },
+    {
+      id: 'tts-clyde', methods: ['GET'], path: '/api/ai/text2speech-v3?voice=man2', title: 'ElevenLabs — Clyde',
+      description: 'Preset: Clyde. Expressive, energetic male voice. Great for gaming, entertainment, and dynamic content.',
+      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/ai/text2speech-v3?text=Hello&voice=man2" }`,
+      tester: { type: 'get', baseUrl: `${dynamicBase}/api/ai/text2speech-v3`, params: [
+        { key: 'text',  label: 'TEXT',  placeholder: 'Hello, I am Clyde.', required: true },
+        { key: 'voice', label: 'VOICE (locked: man2)', placeholder: 'man2' },
+      ]},
+      keywords: 'elevenlabs clyde voice tts male man2 audio speech',
+    },
+    {
+      id: 'tts-paul', methods: ['GET'], path: '/api/ai/text2speech-v3?voice=man3', title: 'ElevenLabs — Paul',
+      description: 'Preset: Paul. Calm, authoritative male voice. Excellent for audiobooks, news reading, and documentary narration.',
+      codeEndpointUrl: `${EDGE}/damini-proxy`, codeBody: `{ "url": "${dynamicBase}/api/ai/text2speech-v3?text=Hello&voice=man3" }`,
+      tester: { type: 'get', baseUrl: `${dynamicBase}/api/ai/text2speech-v3`, params: [
+        { key: 'text',  label: 'TEXT',  placeholder: 'Hello, I am Paul.', required: true },
+        { key: 'voice', label: 'VOICE (locked: man3)', placeholder: 'man3' },
+      ]},
+      keywords: 'elevenlabs paul voice tts male man3 audio speech',
     },
   ];
 
@@ -1235,7 +1275,7 @@ export default function Index() {
           <CategorySection id="ai-chat"  icon={MessageSquare} title="AI CHAT"         count={fChat.length}    description={`${aiChatEps.length} models — Gemini, GPT-5, Claude, DeepSeek, Llama, Blackbox, Meta, Perplexity`} endpoints={fChat}    onSuccess={onSuccess} visible={show('ai-chat')} />
           <CategorySection id="ai-image" icon={ImageIcon}     title="AI IMAGE"        count={fImage.length}   description="Nano Banana, Flux Pro, Writecream — text-to-image generation"       endpoints={fImage}   onSuccess={onSuccess} visible={show('ai-image')} />
           <CategorySection id="ai-music" icon={Music}         title="AI MUSIC"        count={fMusic.length}   description="Suno V3 full song generation · Mubert ambient music"               endpoints={fMusic}   onSuccess={onSuccess} visible={show('ai-music')} />
-          <CategorySection id="ai-voice" icon={Mic}           title="AI VOICE"        count={fVoice.length}   description="Standard TTS · ElevenLabs premium voice synthesis (Rachel, Drew, Clyde, Paul)" endpoints={fVoice}   onSuccess={onSuccess} visible={show('ai-voice')} />
+          <CategorySection id="ai-voice" icon={Mic}           title="AI VOICE"        count={fVoice.length}   description="Standard TTS · ElevenLabs voice presets (Rachel, Drew, Clyde, Paul) · Premium multi-voice synthesis" endpoints={fVoice}   onSuccess={onSuccess} visible={show('ai-voice')} />
           <CategorySection id="anime"    icon={Tv2}           title="ANIME"           count={fAnime.length}   description="Airing schedules · character search · series metadata and synopsis"  endpoints={fAnime}   onSuccess={onSuccess} visible={show('anime')} />
           <CategorySection id="media"    icon={Film}          title="MEDIA"           count={fMedia.length}   description="Video downloader (no watermark) · Spotify search · SoundCloud search" endpoints={fMedia}   onSuccess={onSuccess} visible={show('media')} />
           <CategorySection id="social"   icon={Twitter}       title="SOCIAL"          count={fSocial.length}  description="Fake tweet image generator with custom name, handle, and avatar"     endpoints={fSocial}  onSuccess={onSuccess} visible={show('social')} />
