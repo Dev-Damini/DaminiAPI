@@ -142,17 +142,10 @@ app.get('/api/Search/Spotify', async (req, res) => {
 //   CATEGORY 2 — ADVANCED RESEARCH, CHAT & AGENTS (CYRIL RE-ROUTED PATHS)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 4. WebPilot Dynamic Web Search (DEEPFIX: Strictly expects ?query= fallback structure)
+// 4. WebPilot Dynamic Web Search (Pipes parameters natively to upstream source)
 app.get('/api/ai/Ai-research', async (req, res) => {
   try {
     const queryTerm = req.query.query || req.query.q || req.query.text || '';
-    if (!queryTerm) {
-      return res.status(200).json({
-        creator: "Dev Daminī",
-        success: false,
-        query: ""
-      });
-    }
     const upstream = await axios.get(`${SOURCE_CYRIL}/ai/webpilot`, { 
       ...axiosOpts, 
       params: { query: queryTerm }
@@ -205,8 +198,8 @@ app.get('/perplexity', async (req, res) => {
   }
 });
 
-// 8. Writecream AI Text Engine (Moved to Chat Section)
-app.get('/writecream', async (req, res) => {
+// 8. Writecream AI Text Engine (PERMANENTLY MOVED: Integrated cleanly into /api/ai section)
+app.get('/api/ai/writecream', async (req, res) => {
   try {
     const textPrompt = req.query.text || req.query.prompt || req.query.q || '';
     const upstream = await axios.get(`${SOURCE_CYRIL}/ai/writecream`, { 
@@ -282,7 +275,7 @@ app.get('/api/Maker/fake-tweet', async (req, res) => {
 //   CATEGORY 4 — ANIME EXTRACTOR AGENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 12. Combined Dynamic Anime Router Paths (DEEPFIX: Safe fallback mapping keys instead of validation strings)
+// 12. Combined Dynamic Anime Router Paths
 app.get(['/anime-schedule', '/anime-character', '/anime'], async (req, res) => {
   let subPath = '';
   let fallbackMsg = '';
@@ -293,27 +286,13 @@ app.get(['/anime-schedule', '/anime-character', '/anime'], async (req, res) => {
     fallbackMsg = 'Schedule parsing timeout';
     params = req.query;
   } else if (req.path.includes('character')) {
-    subPath = '/anime/characters';
+    subPath = '/anime/characters'; // Formatted strictly to upstream database location structure
     fallbackMsg = 'Character registry query fault';
     params = { id: req.query.id || req.query.q || '' };
-    if (!params.id) {
-      return res.status(200).json({
-        creator: "Dev Daminī",
-        success: false,
-        message: "Provide a MyAnimeList anime ID via `id` parameter."
-      });
-    }
   } else {
     subPath = '/anime/search';
     fallbackMsg = 'Catalog engine lookup failure';
     params = { q: req.query.q || req.query.query || '' };
-    if (!params.q) {
-      return res.status(200).json({
-        creator: "Dev Daminī",
-        success: false,
-        q: ""
-      });
-    }
   }
 
   try {
