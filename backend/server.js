@@ -17,49 +17,82 @@ app.use(express.json());
 const SOURCE_OMEGA = 'https://omegatech-api.dixonomega.tech';
 const SOURCE_CYRIL = 'https://apis.davidcyril.name.ng';
 
-// Shared axios config — browser-like headers to avoid upstream rejections
+// Shared axios config
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
-const axiosOpts = { timeout: 20000, headers: { 'User-Agent': UA, Accept: 'application/json, */*' } };
+const axiosOpts = { timeout: 25000, headers: { 'User-Agent': UA, Accept: 'application/json, */*' } };
 
-// ─── Utility: Scrub Upstream Branding & Handle HTML Crashes ───────────────────
-function cleanBranding(obj) {
-  if (!obj || typeof obj !== 'object') return obj;
+// ─── Ultimate Zero-Leak Ironclad Firewall ────────────────────────────────────
+function scrubAndSanitise(inputData, fallbackMessage = 'Engine operational exception') {
+  if (!inputData) return { success: false, error: fallbackMessage };
 
-  // Handle Arrays
-  if (Array.isArray(obj)) {
-    return obj.map(item => cleanBranding(item));
-  }
-
-  const cleaned = {};
-  for (const [key, value] of Object.entries(obj)) {
-    // If value is a string, scrub target third-party text
-    if (typeof value === 'string') {
-      let temp = value
-        .replace(/OMEGATECH/gi, 'Daminī API Engine')
-        .replace(/@Omegatech-01/gi, '@DaminiCodesphere')
-        .replace(/David Cyril/gi, 'Dev Daminī');
-      cleaned[key] = temp;
-    } else if (typeof value === 'object') {
-      cleaned[key] = cleanBranding(value);
-    } else {
-      cleaned[key] = value;
+  // Convert to string to safely parse out hidden deep nesting names or HTML strings
+  let serialized = '';
+  if (typeof inputData === 'object') {
+    try {
+      serialized = JSON.stringify(inputData);
+    } catch (e) {
+      serialized = String(inputData);
     }
+  } else {
+    serialized = String(inputData);
   }
 
-  // Force your custom engine signatures
-  if (cleaned.hasOwnProperty('credit')) cleaned.credit = 'Daminī API Engine';
-  if (cleaned.hasOwnProperty('attribution')) cleaned.attribution = '@DaminiCodesphere';
-  if (cleaned.hasOwnProperty('creator')) cleaned.creator = 'Dev Daminī';
-  
-  return cleaned;
+  // Direct, absolute blocking of any incoming HTML content strings
+  if (serialized.trim().startsWith('<') || serialized.includes('<!DOCTYPE html>') || serialized.includes('<html')) {
+    return { 
+      success: false, 
+      status: 502, 
+      error: fallbackMessage,
+      provider: "Daminī API Engine",
+      owner: "Dev Daminī"
+    };
+  }
+
+  // Hard global regex sweep to strip ALL third-party traces across strings or strings-in-json
+  serialized = serialized
+    .replace(/OMEGATECH/gi, 'Daminī API Engine')
+    .replace(/@Omegatech-01/gi, '@DaminiCodesphere')
+    .replace(/OmegaTech API/gi, 'Daminī API Engine')
+    .replace(/David Cyril/gi, 'Dev Daminī')
+    .replace(/dixonomega/gi, 'daminicodesphere');
+
+  try {
+    const parsed = JSON.parse(serialized);
+    
+    // Double-check nested fields for residual HTML errors
+    if (parsed.error && (String(parsed.error).includes('<') || String(parsed.error).includes('404'))) {
+      parsed.error = fallbackMessage;
+    }
+    if (parsed.response_data?.result && String(parsed.response_data.result).includes('<')) {
+      parsed.response_data.result = fallbackMessage;
+    }
+
+    return parsed;
+  } catch (e) {
+    // If it's a string that can't be parsed as JSON, make sure it doesn't leak raw text
+    if (serialized.includes('error') || serialized.includes('failed')) {
+      return { success: false, error: fallbackMessage };
+    }
+    return { success: true, result: serialized };
+  }
 }
 
-function safeData(data, fallback) {
-  // Prevents raw HTML error pages from leaking to the client.
-  if (typeof data === 'string' && data.trim().startsWith('<')) {
-    return fallback;
+// Global Express Catch Helper to keep errors branded
+function sendCleanError(res, err, defaultMsg) {
+  const status = err.response?.status || 500;
+  const rawData = err.response?.data;
+  
+  if (rawData) {
+    return res.status(status).json(scrubAndSanitise(rawData, defaultMsg));
   }
-  return cleanBranding(data);
+  
+  res.status(status).json({
+    success: false,
+    status: status,
+    error: defaultMsg,
+    provider: "Daminī API Engine",
+    owner: "Dev Daminī"
+  });
 }
 
 // ─── Health check ─────────────────────────────────────────────────────────────
@@ -68,17 +101,21 @@ app.get('/', (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 1 — AUDIO & SEARCH (OMEGATECH ROOTED)
+//   CATEGORY 1 — AUDIO & TTS LAYER
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 1. Gemini TTS & Anime Voices (Corrected Upstream Path & Fallbacks)
+// 1. Gemini TTS & Anime / ElevenLabs Core Fix
 app.get('/api/ai/tts', async (req, res) => {
   try {
-    const upstream = await axios.get(`${SOURCE_OMEGA}/api/ai/Gemini-tts`, { ...axiosOpts, params: req.query });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'TTS Engine/Anime Voice disconnected' }));
+    // Directly mapping frontend values to ensure it hits the correct processing key
+    const text = req.query.text || req.query.q || '';
+    const upstream = await axios.get(`${SOURCE_OMEGA}/api/ai/Gemini-tts`, { 
+      ...axiosOpts, 
+      params: { text: text } 
+    });
+    res.status(200).json(scrubAndSanitise(upstream.data, 'TTS Generation engine down'));
   } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'TTS Engine/Anime Voice disconnected' });
+    sendCleanError(res, err, 'TTS Generation engine down');
   }
 });
 
@@ -86,196 +123,139 @@ app.get('/api/ai/tts', async (req, res) => {
 app.get('/api/ai/text2speech-v3', async (req, res) => {
   try {
     const upstream = await axios.get(`${SOURCE_OMEGA}/api/ai/text2speech-v3`, { ...axiosOpts, params: req.query });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Premium Voice Engine disconnected' }));
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Premium Voice Engine disconnected'));
   } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Premium Voice Engine disconnected' });
+    sendCleanError(res, err, 'Premium Voice Engine disconnected');
   }
 });
 
-// 3. Spotify Search
+// 3. Spotify Search Index
 app.get('/api/Search/Spotify', async (req, res) => {
   try {
     const upstream = await axios.get(`${SOURCE_OMEGA}/api/Search/Spotify`, { ...axiosOpts, params: req.query });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Search index unreachable' }));
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Search index unreachable'));
   } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Search index unreachable' });
-  }
-});
-
-// 4. SoundCloud Search
-app.get('/api/Search/soundcloud', async (req, res) => {
-  try {
-    const upstream = await axios.get(`${SOURCE_OMEGA}/api/Search/soundcloud`, { ...axiosOpts, params: req.query });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'SoundCloud bridge failure' }));
-  } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'SoundCloud bridge failure' });
+    sendCleanError(res, err, 'Search index unreachable');
   }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 2 — INTELLIGENCE, RESEARCH & DOWNLOADS (DAVID CYRIL ROOTED)
+//   CATEGORY 2 — ADVANCED RESEARCH & AGENTS (CYRIL RE-ROUTED PATHS)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 5. AI Research / WebPilot 
+// 4. WebPilot Dynamic Web Search (Fixed endpoint query target mapping)
 app.get('/api/ai/Ai-research', async (req, res) => {
   try {
-    const frontendQuery = req.query.q || req.query.query || '';
+    const queryTerm = req.query.q || req.query.query || req.query.text || '';
     const upstream = await axios.get(`${SOURCE_CYRIL}/ai/webpilot`, { 
       ...axiosOpts, 
-      params: { query: frontendQuery } 
+      params: { text: queryTerm } // Remapped to query text string format
     });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'WebPilot research engine node down' }));
+    res.status(200).json(scrubAndSanitise(upstream.data, 'WebPilot research engine node down'));
   } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'WebPilot research engine node down' });
+    sendCleanError(res, err, 'WebPilot research engine node down');
   }
 });
 
-// 6. Blackbox AI 
+// 5. Blackbox Intelligence Core (Path realignment)
 app.get('/blackbox', async (req, res) => {
   try {
-    const frontendQuery = req.query.q || req.query.query || '';
+    const queryTerm = req.query.q || req.query.query || '';
     const upstream = await axios.get(`${SOURCE_CYRIL}/ai/blackbox`, { 
       ...axiosOpts, 
-      params: { q: frontendQuery } 
+      params: { text: queryTerm } 
     });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Computational stream parsing crash' }));
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Computational stream parsing crash'));
   } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Computational stream parsing crash' });
+    sendCleanError(res, err, 'Computational stream parsing crash');
   }
 });
 
-// 7. Llama Meta AI
+// 6. Llama Meta AI System Route (Fixed parameter mapping to ?text=)
 app.get('/metaai', async (req, res) => {
   try {
-    const frontendQuery = req.query.q || req.query.query || '';
+    const queryTerm = req.query.q || req.query.query || '';
     const upstream = await axios.get(`${SOURCE_CYRIL}/ai/metaai`, { 
       ...axiosOpts, 
-      params: { q: frontendQuery } 
+      params: { text: queryTerm } 
     });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Core LLM instance handling fault' }));
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Core LLM instance handling fault'));
   } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Core LLM instance handling fault' });
+    sendCleanError(res, err, 'Core LLM instance handling fault');
   }
 });
 
-// 8. Perplexity Search (Parameter matching fix)
+// 7. Perplexity Conversational Search Engine (Swapped target query logic)
 app.get('/perplexity', async (req, res) => {
   try {
-    const frontendQuery = req.query.q || req.query.query || '';
+    const queryTerm = req.query.q || req.query.query || '';
     const upstream = await axios.get(`${SOURCE_CYRIL}/ai/perplexity`, { 
       ...axiosOpts, 
-      params: { query: frontendQuery } 
+      params: { text: queryTerm } 
     });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Search optimization parsing crash' }));
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Search optimization parsing crash'));
   } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Search optimization parsing crash' });
-  }
-});
-
-// 9. Media & Music Video Downloader YTV3
-app.get('/api/download/ytv3', async (req, res) => {
-  try {
-    const targetUrl = req.query.url || req.query.q || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/download/ytv3`, { 
-      ...axiosOpts, 
-      params: { url: targetUrl } 
-    });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Media downstream link retrieval crash' }));
-  } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Media downstream link retrieval crash' });
+    sendCleanError(res, err, 'Search optimization parsing crash');
   }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 3 — GENERATIVE CREATIVE & IMAGING
+//   CATEGORY 3 — MUSIC & HIGH-TIER IMAGE GENERATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 10. Advanced Mubert AI Create Engine
-app.get('/mubert', async (req, res) => {
-  try {
-    const params = {
-      prompt: req.query.prompt || req.query.q || 'lofi chill jazz beats',
-      duration: req.query.duration || 60,
-      intensity: req.query.intensity || 'high',
-      format: req.query.format || 'mp3'
-    };
-    const upstream = await axios.get(`${SOURCE_CYRIL}/aimusic/mubert/create`, { ...axiosOpts, params });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Audio composition node down' }));
-  } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Audio composition node down' });
-  }
-});
-
-// 11. Advanced Suno AI Create Engine (Fixes 404 Layout routes)
+// 8. Suno Track Engine Creator (Patched directory path routing structure)
 app.get('/api/ai/suno', async (req, res) => {
   try {
     const params = {
-      prompt: req.query.prompt || req.query.q || '',
-      lyrics: req.query.lyrics || '',
-      tags: req.query.tags || '',
-      title: req.query.title || '',
-      instrumental: req.query.instrumental || 'false',
+      query: req.query.prompt || req.query.q || '',
       model: req.query.model || 'chirp-v3-5'
     };
-    const upstream = await axios.get(`${SOURCE_CYRIL}/aimusic/suno/create`, { ...axiosOpts, params });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Suno track generation failure' }));
+    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/suno`, { ...axiosOpts, params });
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Suno track generation failure'));
   } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Suno track generation failure' });
+    sendCleanError(res, err, 'Suno track generation failure');
   }
 });
 
-// 12. Writecream & Whitecream Text-To-Image Engine
-app.get('/writecream', async (req, res) => {
-  try {
-    const textPrompt = req.query.text || req.query.prompt || req.query.q || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/writecream`, { 
-      ...axiosOpts, 
-      params: { text: textPrompt } 
-    });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Canvas image generation out of bounds' }));
-  } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Canvas image generation out of bounds' });
-  }
-});
-
-// 13. Flux Pro / damini-image (Injects custom "Api-Key" headers)
+// 9. Flux Pro / damini-image (Forced Global Parameter alignment)
 app.get('/api/ai/damini-image', async (req, res) => {
   try {
-    const textPrompt = req.query.prompt || req.query.q || '';
+    const imagePrompt = req.query.prompt || req.query.q || '';
     const upstream = await axios.get(`${SOURCE_CYRIL}/ai/fluxpro`, {
-      timeout: 25000,
+      timeout: 28000,
       headers: { 
         'User-Agent': UA,
-        'Api-Key': 'flux-pro-secure-token-global', // Upstream authorized validation header
+        'Api-Key': 'flux-pro-secure-token-global',
         Accept: 'application/json, */*'
       },
-      params: { prompt: textPrompt }
+      params: { text: imagePrompt } // Fixed query map variant
     });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Flux Pro base engine dropped connection' }));
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Flux Pro base engine connection dropped'));
   } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Flux Pro base engine dropped connection' });
+    sendCleanError(res, err, 'Flux Pro base engine connection dropped');
   }
 });
 
-// 14. Fake Tweet Engine (Captures false status inside code 200 payload)
+// 10. Writecream / Whitecream Text-To-Image Node
+app.get('/writecream', async (req, res) => {
+  try {
+    const imagePrompt = req.query.text || req.query.prompt || req.query.q || '';
+    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/writecream`, { 
+      ...axiosOpts, 
+      params: { text: imagePrompt } 
+    });
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Canvas image generation out of bounds'));
+  } catch (err) {
+    sendCleanError(res, err, 'Canvas image generation out of bounds');
+  }
+});
+
+// 11. Fake Tweet Generation Render Pipeline
 app.get('/api/Maker/fake-tweet', async (req, res) => {
   try {
     const upstream = await axios.get(`${SOURCE_OMEGA}/api/Maker/fake-tweet`, { ...axiosOpts, params: req.query });
     
-    // Intercept upstream payload returns that have status: false hidden inside status 200
-    if (upstream.data && upstream.data.status === false) {
+    if (upstream.data && (upstream.data.status === false || upstream.data.error)) {
       return res.status(200).json({
         statusCode: 200,
         status: false,
@@ -286,18 +266,17 @@ app.get('/api/Maker/fake-tweet', async (req, res) => {
       });
     }
 
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Graphic render buffer mismatch' }));
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Graphic render buffer mismatch'));
   } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Graphic render buffer mismatch' });
+    sendCleanError(res, err, 'Graphic render buffer mismatch');
   }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 4 — ANIME DATA EXTRACTION 
+//   CATEGORY 4 — ANIME EXTRACTOR AGENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 15. Anime Sub-Router Handler
+// 12. Combined Dynamic Anime Router Paths (Forced Scrubbing)
 app.get(['/anime-schedule', '/anime-character', '/anime'], async (req, res) => {
   let subPath = '';
   let fallbackMsg = '';
@@ -315,10 +294,9 @@ app.get(['/anime-schedule', '/anime-character', '/anime'], async (req, res) => {
 
   try {
     const upstream = await axios.get(`${SOURCE_CYRIL}${subPath}`, { ...axiosOpts, params: req.query });
-    res.status(200).json(safeData(upstream.data, { success: false, error: fallbackMsg }));
+    res.status(200).json(scrubAndSanitise(upstream.data, fallbackMsg));
   } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: fallbackMsg });
+    sendCleanError(res, err, fallbackMsg);
   }
 });
 
