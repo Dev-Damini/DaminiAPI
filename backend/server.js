@@ -36,12 +36,13 @@ app.get('/', (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 1 — AUDIO & SEARCH
+//   CATEGORY 1 — AUDIO & SEARCH (OMEGATECH ROOTED)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// 1. Gemini TTS (Corrected Upstream Path)
 app.get('/api/ai/tts', async (req, res) => {
   try {
-    const upstream = await axios.get(`${SOURCE_OMEGA}/api/ai/tts`, { ...axiosOpts, params: req.query });
+    const upstream = await axios.get(`${SOURCE_OMEGA}/api/ai/Gemini-tts`, { ...axiosOpts, params: req.query });
     res.status(200).json(safeData(upstream.data, { success: false, error: 'TTS Engine unhandled exception' }));
   } catch (err) {
     const status = err.response?.status || 500;
@@ -49,6 +50,7 @@ app.get('/api/ai/tts', async (req, res) => {
   }
 });
 
+// 2. Live3D TTS V3
 app.get('/api/ai/text2speech-v3', async (req, res) => {
   try {
     const upstream = await axios.get(`${SOURCE_OMEGA}/api/ai/text2speech-v3`, { ...axiosOpts, params: req.query });
@@ -59,6 +61,7 @@ app.get('/api/ai/text2speech-v3', async (req, res) => {
   }
 });
 
+// 3. Spotify Search
 app.get('/api/Search/Spotify', async (req, res) => {
   try {
     const upstream = await axios.get(`${SOURCE_OMEGA}/api/Search/Spotify`, { ...axiosOpts, params: req.query });
@@ -69,6 +72,7 @@ app.get('/api/Search/Spotify', async (req, res) => {
   }
 });
 
+// 4. SoundCloud Search
 app.get('/api/Search/soundcloud', async (req, res) => {
   try {
     const upstream = await axios.get(`${SOURCE_OMEGA}/api/Search/soundcloud`, { ...axiosOpts, params: req.query });
@@ -80,12 +84,17 @@ app.get('/api/Search/soundcloud', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 2 — INTELLIGENCE & CONVERSATION
+//   CATEGORY 2 — INTELLIGENCE, RESEARCH & DOWNLOADS (DAVID CYRIL ROOTED)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// 5. AI Research / WebPilot (Maps frontend parameter to ?query=)
 app.get('/api/ai/Ai-research', async (req, res) => {
   try {
-    const upstream = await axios.get(`${SOURCE_OMEGA}/api/ai/Ai-research`, { ...axiosOpts, params: req.query });
+    const frontendQuery = req.query.q || req.query.query || '';
+    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/webpilot`, { 
+      ...axiosOpts, 
+      params: { query: frontendQuery } 
+    });
     res.status(200).json(safeData(upstream.data, { success: false, error: 'Research node drop' }));
   } catch (err) {
     const status = err.response?.status || 500;
@@ -93,9 +102,14 @@ app.get('/api/ai/Ai-research', async (req, res) => {
   }
 });
 
+// 6. Blackbox AI (Maintained on root)
 app.get('/blackbox', async (req, res) => {
   try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/blackbox`, { ...axiosOpts, params: req.query });
+    const frontendQuery = req.query.q || req.query.query || '';
+    const upstream = await axios.get(`${SOURCE_CYRIL}/blackbox`, { 
+      ...axiosOpts, 
+      params: { q: frontendQuery } 
+    });
     res.status(200).json(safeData(upstream.data, { success: false, error: 'Computational frame missing' }));
   } catch (err) {
     const status = err.response?.status || 500;
@@ -103,9 +117,14 @@ app.get('/blackbox', async (req, res) => {
   }
 });
 
+// 7. Llama Meta AI (Updated Subfolder Folder)
 app.get('/metaai', async (req, res) => {
   try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/metaai`, { ...axiosOpts, params: req.query });
+    const frontendQuery = req.query.q || req.query.query || '';
+    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/metaai`, { 
+      ...axiosOpts, 
+      params: { q: frontendQuery } 
+    });
     res.status(200).json(safeData(upstream.data, { success: false, error: 'Core LLM instance array fault' }));
   } catch (err) {
     const status = err.response?.status || 500;
@@ -113,9 +132,14 @@ app.get('/metaai', async (req, res) => {
   }
 });
 
+// 8. Perplexity Search (Updated Subfolder Folder)
 app.get('/perplexity', async (req, res) => {
   try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/perplexity`, { ...axiosOpts, params: req.query });
+    const frontendQuery = req.query.q || req.query.query || '';
+    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/perplexity`, { 
+      ...axiosOpts, 
+      params: { q: frontendQuery } 
+    });
     res.status(200).json(safeData(upstream.data, { success: false, error: 'Search optimization parsing crash' }));
   } catch (err) {
     const status = err.response?.status || 500;
@@ -123,13 +147,35 @@ app.get('/perplexity', async (req, res) => {
   }
 });
 
+// 9. Media & Music Video Downloader YTV3 (Maps input to ?url=)
+app.get('/api/download/ytv3', async (req, res) => {
+  try {
+    const targetUrl = req.query.url || req.query.q || '';
+    const upstream = await axios.get(`${SOURCE_CYRIL}/download/ytv3`, { 
+      ...axiosOpts, 
+      params: { url: targetUrl } 
+    });
+    res.status(200).json(safeData(upstream.data, { success: false, error: 'Media downstream link retrieval crash' }));
+  } catch (err) {
+    const status = err.response?.status || 500;
+    res.status(status).json({ success: false, status, error: 'Media downstream link retrieval crash' });
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 3 — GENERATIVE CREATIVE
+//   CATEGORY 3 — GENERATIVE CREATIVE & GENERATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// 10. Advanced Mubert AI Create Engine
 app.get('/mubert', async (req, res) => {
   try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/mubert`, { ...axiosOpts, params: req.query });
+    const params = {
+      prompt: req.query.prompt || req.query.q || 'lofi chill jazz beats',
+      duration: req.query.duration || 60,
+      intensity: req.query.intensity || 'high',
+      format: req.query.format || 'mp3'
+    };
+    const upstream = await axios.get(`${SOURCE_CYRIL}/aimusic/mubert/create`, { ...axiosOpts, params });
     res.status(200).json(safeData(upstream.data, { success: false, error: 'Audio composition node down' }));
   } catch (err) {
     const status = err.response?.status || 500;
@@ -137,9 +183,33 @@ app.get('/mubert', async (req, res) => {
   }
 });
 
+// 11. Advanced Suno AI Create Engine (Replaces Omegatech Suno)
+app.get('/api/ai/suno', async (req, res) => {
+  try {
+    const params = {
+      prompt: req.query.prompt || req.query.q || '',
+      lyrics: req.query.lyrics || '',
+      tags: req.query.tags || '',
+      title: req.query.title || '',
+      instrumental: req.query.instrumental || 'false',
+      model: req.query.model || 'chirp-v3-5'
+    };
+    const upstream = await axios.get(`${SOURCE_CYRIL}/aimusic/suno/create`, { ...axiosOpts, params });
+    res.status(200).json(safeData(upstream.data, { success: false, error: 'Suno track generation fault' }));
+  } catch (err) {
+    const status = err.response?.status || 500;
+    res.status(status).json({ success: false, status, error: 'Suno track generation fault' });
+  }
+});
+
+// 12. Writecream Text-To-Image Engine (Updated Subfolder & Maps query to ?text=)
 app.get('/writecream', async (req, res) => {
   try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/writecream`, { ...axiosOpts, params: req.query });
+    const textPrompt = req.query.text || req.query.q || '';
+    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/writecream`, { 
+      ...axiosOpts, 
+      params: { text: textPrompt } 
+    });
     res.status(200).json(safeData(upstream.data, { success: false, error: 'Canvas generation out of bounds' }));
   } catch (err) {
     const status = err.response?.status || 500;
@@ -147,6 +217,7 @@ app.get('/writecream', async (req, res) => {
   }
 });
 
+// 13. Fake Tweet Engine (Omegatech Maker Group)
 app.get('/api/Maker/fake-tweet', async (req, res) => {
   try {
     const upstream = await axios.get(`${SOURCE_OMEGA}/api/Maker/fake-tweet`, { ...axiosOpts, params: req.query });
@@ -158,36 +229,31 @@ app.get('/api/Maker/fake-tweet', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 4 — ANIME DATA EXTRACTION
+//   CATEGORY 4 — ANIME DATA EXTRACTION (DAVID CYRIL SUBFOLDER REDIRECTS)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-app.get('/anime-schedule', async (req, res) => {
-  try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/anime-schedule`, { ...axiosOpts, params: req.query });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Schedule parsing timeout' }));
-  } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Schedule parsing timeout' });
-  }
-});
+// 14. Anime Sub-Router Handler (Combines and proxies all 3 structural subpaths dynamically)
+app.get(['/anime-schedule', '/anime-character', '/anime'], async (req, res) => {
+  let subPath = '';
+  let fallbackMsg = '';
 
-app.get('/anime-character', async (req, res) => {
-  try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/anime-character`, { ...axiosOpts, params: req.query });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Character registry query fault' }));
-  } catch (err) {
-    const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Character registry query fault' });
+  if (req.path === '/anime-schedule') {
+    subPath = '/anime/schedule';
+    fallbackMsg = 'Schedule parsing timeout';
+  } else if (req.path === '/anime-character') {
+    subPath = '/anime/characters';
+    fallbackMsg = 'Character registry query fault';
+  } else {
+    subPath = '/anime/search';
+    fallbackMsg = 'Catalog engine lookup failure';
   }
-});
 
-app.get('/anime', async (req, res) => {
   try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/anime`, { ...axiosOpts, params: req.query });
-    res.status(200).json(safeData(upstream.data, { success: false, error: 'Catalog engine lookup failure' }));
+    const upstream = await axios.get(`${SOURCE_CYRIL}${subPath}`, { ...axiosOpts, params: req.query });
+    res.status(200).json(safeData(upstream.data, { success: false, error: fallbackMsg }));
   } catch (err) {
     const status = err.response?.status || 500;
-    res.status(status).json({ success: false, status, error: 'Catalog engine lookup failure' });
+    res.status(status).json({ success: false, status, error: fallbackMsg });
   }
 });
 
