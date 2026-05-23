@@ -142,7 +142,7 @@ app.get('/api/Search/Spotify', async (req, res) => {
 //   CATEGORY 2 — ADVANCED RESEARCH, CHAT & AGENTS (CYRIL RE-ROUTED PATHS)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 4. WebPilot Dynamic Web Search (FIXED: Strict structure validation match)
+// 4. WebPilot Dynamic Web Search (DEEPFIX: Strictly expects ?query= fallback structure)
 app.get('/api/ai/Ai-research', async (req, res) => {
   try {
     const queryTerm = req.query.query || req.query.q || req.query.text || '';
@@ -150,7 +150,7 @@ app.get('/api/ai/Ai-research', async (req, res) => {
       return res.status(200).json({
         creator: "Dev Daminī",
         success: false,
-        message: "Provide ?query="
+        query: ""
       });
     }
     const upstream = await axios.get(`${SOURCE_CYRIL}/ai/webpilot`, { 
@@ -205,7 +205,7 @@ app.get('/perplexity', async (req, res) => {
   }
 });
 
-// 8. Writecream AI Text Engine (RELOCATED: Moved to Chat Section & Fixed description mapping)
+// 8. Writecream AI Text Engine (Moved to Chat Section)
 app.get('/writecream', async (req, res) => {
   try {
     const textPrompt = req.query.text || req.query.prompt || req.query.q || '';
@@ -282,7 +282,7 @@ app.get('/api/Maker/fake-tweet', async (req, res) => {
 //   CATEGORY 4 — ANIME EXTRACTOR AGENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 12. Combined Dynamic Anime Router Paths (DEEPFIX: Exact internal inclusion checks)
+// 12. Combined Dynamic Anime Router Paths (DEEPFIX: Safe fallback mapping keys instead of validation strings)
 app.get(['/anime-schedule', '/anime-character', '/anime'], async (req, res) => {
   let subPath = '';
   let fallbackMsg = '';
@@ -304,7 +304,6 @@ app.get(['/anime-schedule', '/anime-character', '/anime'], async (req, res) => {
       });
     }
   } else {
-    // Falls back safely to pure catalog searching route
     subPath = '/anime/search';
     fallbackMsg = 'Catalog engine lookup failure';
     params = { q: req.query.q || req.query.query || '' };
@@ -312,7 +311,7 @@ app.get(['/anime-schedule', '/anime-character', '/anime'], async (req, res) => {
       return res.status(200).json({
         creator: "Dev Daminī",
         success: false,
-        message: "Provide a search query via `q` parameter."
+        q: ""
       });
     }
   }
