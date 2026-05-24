@@ -6,7 +6,7 @@ import {
   Film, Music, Mail, Inbox, Eye, Heart, MessageSquare,
   Paperclip, X, Image as ImageIcon, Radio,
   Twitter, BarChart2, Globe, Play, Mic, Tv2, Headphones,
-  Sparkles, Layers,
+  Sparkles, Layers, Zap,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import {
@@ -821,7 +821,7 @@ function AnalyticsChart({ refreshKey }: { refreshKey: number }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 //   MAIN PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
-type CategoryId = 'overview' | 'ai-chat' | 'ai-image' | 'ai-music' | 'ai-voice' | 'anime' | 'tempmail' | 'media' | 'social' | 'research';
+type CategoryId = 'overview' | 'ai-chat' | 'ai-image' | 'ai-music' | 'ai-voice' | 'anime' | 'tempmail' | 'media' | 'social' | 'research' | 'fun';
 
 interface CategoryMeta {
   id: CategoryId;
@@ -830,16 +830,17 @@ interface CategoryMeta {
 }
 
 const CATEGORIES: CategoryMeta[] = [
-  { id: 'overview',  icon: Activity,     label: 'Overview'    },
-  { id: 'ai-chat',   icon: MessageSquare,label: 'AI Chat'     },
-  { id: 'ai-image',  icon: ImageIcon,    label: 'AI Image'    },
-  { id: 'ai-music',  icon: Music,        label: 'AI Music'    },
-  { id: 'ai-voice',  icon: Mic,          label: 'AI Voice'    },
-  { id: 'anime',     icon: Tv2,          label: 'Anime'       },
-  { id: 'media',     icon: Film,         label: 'Media'       },
-  { id: 'social',    icon: Twitter,      label: 'Social'      },
-  { id: 'research',  icon: Globe,        label: 'Research'    },
-  { id: 'tempmail',  icon: Mail,         label: 'Temp Mail'   },
+  { id: 'overview',  icon: Activity,      label: 'Overview'    },
+  { id: 'ai-chat',   icon: MessageSquare, label: 'AI Chat'     },
+  { id: 'ai-image',  icon: ImageIcon,     label: 'AI Image'    },
+  { id: 'ai-music',  icon: Music,         label: 'AI Music'    },
+  { id: 'ai-voice',  icon: Mic,           label: 'AI Voice'    },
+  { id: 'anime',     icon: Tv2,           label: 'Anime'       },
+  { id: 'media',     icon: Film,          label: 'Media'       },
+  { id: 'social',    icon: Twitter,       label: 'Social'      },
+  { id: 'research',  icon: Globe,         label: 'Research'    },
+  { id: 'fun',       icon: Zap,           label: 'Fun'         },
+  { id: 'tempmail',  icon: Mail,          label: 'Temp Mail'   },
 ];
 
 const EDGE = import.meta.env.VITE_EDGE_URL ?? 'https://mxcbspvyqeckbkbomxcb.backend.onspace.ai/functions/v1';
@@ -873,27 +874,57 @@ export default function Index() {
 
   // ── Endpoint Definitions ───────────────────────────────────────────────────
 
-  // AI CHAT — all chat models in one place
+  // AI CHAT
   const aiChatEps: EndpointDef[] = [
-    { id: 'gemini-lite',    methods: ['POST'], path: '/api/ai/gemini-lite',    title: 'Gemini 2.5 Flash Lite', description: 'Fastest response. Ideal for high-throughput tasks, quick lookups, and summaries. Lowest cost per token.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Hello!", "model_id": 1 }', tester: { type: 'chat', modelId: 1 }, keywords: 'gemini lite fast chat ai' },
-    { id: 'gemini-flash',   methods: ['POST'], path: '/api/ai/gemini-flash',   title: 'Gemini 3 Flash',        description: 'Default recommendation. Frontier-speed intelligence — best balance of speed, accuracy, and cost.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Hello!", "model_id": 2 }', tester: { type: 'chat', modelId: 2 }, keywords: 'gemini flash recommended chat ai' },
-    { id: 'gemini-pro',     methods: ['POST'], path: '/api/ai/gemini-pro',     title: 'Gemini 3 Pro',          description: 'Maximum reasoning and accuracy. Best for complex analytical tasks, long-form generation, and research.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Explain quantum entanglement.", "model_id": 3 }', tester: { type: 'chat', modelId: 3 }, keywords: 'gemini pro reasoning complex chat ai' },
-    { id: 'gpt5-mini',      methods: ['POST'], path: '/api/ai/gpt5-mini',      title: 'GPT-5 Mini',            description: 'Balanced speed and quality. Great for coding assistance, structured writing, and technical tasks.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Write a Python function.", "model_id": 4 }', tester: { type: 'chat', modelId: 4 }, keywords: 'gpt5 mini openai chat ai' },
-    { id: 'llama-70b',      methods: ['POST'], path: '/api/ai/llama-70b',      title: 'Llama 3.3 70B',         description: 'Meta Llama 3.3 70B — private routing, no data retention. Strong general-purpose intelligence.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Hello!", "model_id": 5 }', tester: { type: 'chat', modelId: 5 }, keywords: 'llama meta private chat ai' },
-    { id: 'mixtral-24b',    methods: ['POST'], path: '/api/ai/mixtral-24b',    title: 'Mixtral 24B',           description: 'Mistral Mixtral-Small-24B — fast, strong multilingual capability. No API key required.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Translate this to French.", "model_id": 6 }', tester: { type: 'chat', modelId: 6 }, keywords: 'mixtral mistral multilingual chat ai' },
-    { id: 'claude-pro',     methods: ['POST'], path: '/api/ai/claude-pro',     title: 'Claude Pro',            description: 'Premium reasoning, nuanced writing, and deep comprehension. Supports vision via image attachment.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Analyse this concept.", "model_id": 7 }', tester: { type: 'chat', modelId: 7 }, keywords: 'claude pro reasoning vision chat ai' },
-    { id: 'deepseek-v3',    methods: ['POST'], path: '/api/ai/deepseek-v3',    title: 'DeepSeek V3.2',         description: 'Deep analytical intelligence. Excels at mathematics, code generation, and structured reasoning. Supports vision.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Solve this math problem.", "model_id": 8 }', tester: { type: 'chat', modelId: 8 }, keywords: 'deepseek v3 math code vision chat ai' },
-    { id: 'claude-std',     methods: ['POST'], path: '/api/ai/claude',         title: 'Standard Claude',       description: 'Reliable, thoughtful responses. Great for writing assistance, Q&A, and summarisation tasks.', codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Summarise this.", "model_id": 9 }', tester: { type: 'chat', modelId: 9 }, keywords: 'claude standard writing qa chat ai' },
-    { id: 'blackbox',   methods: ['GET'], path: '/blackbox',  title: 'Blackbox Core',        description: 'Conversational AI engine optimised for coding, debugging, and technical explanations. Returns result string.', codeEndpointUrl: `${BACKEND_BASE}/blackbox`, codeBody: `{ "url": "${BACKEND_BASE}/blackbox?q=Hello" }`, tester: { type: 'get', baseUrl: `${BACKEND_BASE}/blackbox`,    params: [{ key: 'q', label: 'PROMPT',        placeholder: 'What is recursion?',           required: true }] }, keywords: 'blackbox ai coding chat' },
-    { id: 'meta-ai',    methods: ['GET'], path: '/metaai',    title: 'Llama Meta AI',        description: 'Meta conversational AI running on Llama architecture. Returns natural language response string.',                codeEndpointUrl: `${BACKEND_BASE}/metaai`, codeBody: `{ "url": "${BACKEND_BASE}/metaai?q=Hello" }`,          tester: { type: 'get', baseUrl: `${BACKEND_BASE}/metaai`,      params: [{ key: 'q', label: 'PROMPT',        placeholder: 'Tell me a joke.',              required: true }] }, keywords: 'meta ai llama chat' },
-    { id: 'perplexity', methods: ['GET'], path: '/perplexity', title: 'Perplexity Search',    description: 'Web-searched responses with cited sources. Returns result summary plus sources array with links and titles.',   codeEndpointUrl: `${BACKEND_BASE}/perplexity`, codeBody: `{ "url": "${BACKEND_BASE}/perplexity?q=Latest AI breakthroughs" }`, tester: { type: 'get', baseUrl: `${BACKEND_BASE}/perplexity`,  params: [{ key: 'q', label: 'SEARCH QUERY', placeholder: 'Latest AI breakthroughs 2025', required: true }] }, keywords: 'perplexity search web citations ai' },
+    { id: 'gemini-lite',  methods: ['POST'], path: '/api/ai/gemini-lite',  title: 'Gemini 2.5 Flash Lite', description: 'Fastest response. Ideal for high-throughput tasks, quick lookups, and summaries. Lowest cost per token.',              codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Hello!", "model_id": 1 }',                                  tester: { type: 'chat', modelId: 1 }, keywords: 'gemini lite fast chat ai' },
+    { id: 'gemini-flash', methods: ['POST'], path: '/api/ai/gemini-flash', title: 'Gemini 3 Flash',         description: 'Default recommendation. Frontier-speed intelligence — best balance of speed, accuracy, and cost.',                    codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Hello!", "model_id": 2 }',                                  tester: { type: 'chat', modelId: 2 }, keywords: 'gemini flash recommended chat ai' },
+    { id: 'gemini-pro',   methods: ['POST'], path: '/api/ai/gemini-pro',   title: 'Gemini 3 Pro',           description: 'Maximum reasoning and accuracy. Best for complex analytical tasks, long-form generation, and research.',               codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Explain quantum entanglement.", "model_id": 3 }',          tester: { type: 'chat', modelId: 3 }, keywords: 'gemini pro reasoning complex chat ai' },
+    { id: 'gpt5-mini',    methods: ['POST'], path: '/api/ai/gpt5-mini',    title: 'GPT-5 Mini',             description: 'Balanced speed and quality. Great for coding assistance, structured writing, and technical tasks.',                    codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Write a Python function.", "model_id": 4 }',               tester: { type: 'chat', modelId: 4 }, keywords: 'gpt5 mini openai chat ai' },
+    { id: 'llama-70b',    methods: ['POST'], path: '/api/ai/llama-70b',    title: 'Llama 3.3 70B',          description: 'Meta Llama 3.3 70B — private routing, no data retention. Strong general-purpose intelligence.',                        codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Hello!", "model_id": 5 }',                                  tester: { type: 'chat', modelId: 5 }, keywords: 'llama meta private chat ai' },
+    { id: 'mixtral-24b',  methods: ['POST'], path: '/api/ai/mixtral-24b',  title: 'Mixtral 24B',            description: 'Mistral Mixtral-Small-24B — fast, strong multilingual capability. No API key required.',                              codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Translate this to French.", "model_id": 6 }',              tester: { type: 'chat', modelId: 6 }, keywords: 'mixtral mistral multilingual chat ai' },
+    { id: 'claude-pro',   methods: ['POST'], path: '/api/ai/claude-pro',   title: 'Claude Pro',             description: 'Premium reasoning, nuanced writing, and deep comprehension. Supports vision via image attachment.',                    codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Analyse this concept.", "model_id": 7 }',                  tester: { type: 'chat', modelId: 7 }, keywords: 'claude pro reasoning vision chat ai' },
+    { id: 'deepseek-v3',  methods: ['POST'], path: '/api/ai/deepseek-v3',  title: 'DeepSeek V3.2',          description: 'Deep analytical intelligence. Excels at mathematics, code generation, and structured reasoning. Supports vision.',      codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Solve this math problem.", "model_id": 8 }',               tester: { type: 'chat', modelId: 8 }, keywords: 'deepseek v3 math code vision chat ai' },
+    { id: 'claude-std',   methods: ['POST'], path: '/api/ai/claude',       title: 'Standard Claude',        description: 'Reliable, thoughtful responses. Great for writing assistance, Q&A, and summarisation tasks.',                          codeEndpointUrl: `${EDGE}/damini-easemate`, codeBody: '{ "prompt": "Summarise this.", "model_id": 9 }',                        tester: { type: 'chat', modelId: 9 }, keywords: 'claude standard writing qa chat ai' },
+    {
+      id: 'writecream-text', methods: ['GET'], path: '/api/ai/writecream', title: 'Writecream AI Writer',
+      description: 'AI-powered text generation engine. Input a topic or prompt and receive a polished written output string.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/ai/writecream`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/writecream?text=Write a poem about space" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/writecream`, params: [{ key: 'text', label: 'TOPIC / PROMPT', placeholder: 'Write a poem about space', required: true }] },
+      keywords: 'writecream ai text write chat generate content',
+    },
+    { id: 'blackbox',   methods: ['GET'], path: '/blackbox',   title: 'Blackbox Core',     description: 'Conversational AI engine optimised for coding, debugging, and technical explanations. Returns result string.', codeEndpointUrl: `${BACKEND_BASE}/blackbox`,   codeBody: `{ "url": "${BACKEND_BASE}/blackbox?q=Hello" }`,                          tester: { type: 'get', baseUrl: `${BACKEND_BASE}/blackbox`,   params: [{ key: 'q', label: 'PROMPT',       placeholder: 'What is recursion?',           required: true }] }, keywords: 'blackbox ai coding chat' },
+    { id: 'meta-ai',    methods: ['GET'], path: '/metaai',     title: 'Llama Meta AI',     description: 'Meta conversational AI running on Llama architecture. Returns natural language response string.',               codeEndpointUrl: `${BACKEND_BASE}/metaai`,    codeBody: `{ "url": "${BACKEND_BASE}/metaai?q=Hello" }`,                            tester: { type: 'get', baseUrl: `${BACKEND_BASE}/metaai`,    params: [{ key: 'q', label: 'PROMPT',       placeholder: 'Tell me a joke.',              required: true }] }, keywords: 'meta ai llama chat' },
+    { id: 'perplexity', methods: ['GET'], path: '/perplexity', title: 'Perplexity Search', description: 'Web-searched responses with cited sources. Returns result summary plus sources array with links and titles.',   codeEndpointUrl: `${BACKEND_BASE}/perplexity`, codeBody: `{ "url": "${BACKEND_BASE}/perplexity?q=Latest AI breakthroughs" }`,   tester: { type: 'get', baseUrl: `${BACKEND_BASE}/perplexity`, params: [{ key: 'q', label: 'SEARCH QUERY', placeholder: 'Latest AI breakthroughs 2025', required: true }] }, keywords: 'perplexity search web citations ai' },
   ];
 
   // AI IMAGE
   const aiImageEps: EndpointDef[] = [
-    { id: 'nano-banana',  methods: ['POST'], path: '/api/image/nano-banana', title: 'Nano Banana Generator', description: 'Fast AI image generation engine. Returns a high-quality hosted image URL from a text prompt.', codeEndpointUrl: `${EDGE}/damini-image`, codeBody: '{ "prompt": "A futuristic city at night", "engine": "nano-banana" }', tester: { type: 'image', engine: 'nano-banana' }, keywords: 'image generation nano banana art' },
-    { id: 'flux-pro',    methods: ['POST'], path: '/api/image/flux-pro',    title: 'Flux Pro Generator',    description: 'Professional high-fidelity image generation. Ideal for product visuals, creative work, and detailed scenes.', codeEndpointUrl: `${EDGE}/damini-image`, codeBody: '{ "prompt": "Cinematic portrait in golden hour", "engine": "flux-pro" }', tester: { type: 'image', engine: 'flux-pro' }, keywords: 'flux pro image generation professional' },
-    { id: 'writecream',  methods: ['GET'],  path: '/writecream',            title: 'Writecream Image Generator', description: 'Text-to-image generation engine. Returns a direct URL to the generated canvas resource.', codeEndpointUrl: `${BACKEND_BASE}/writecream`, codeBody: `{ "url": "${BACKEND_BASE}/writecream?prompt=A dragon flying" }`, tester: { type: 'get', baseUrl: `${BACKEND_BASE}/writecream`, params: [{ key: 'prompt', label: 'IMAGE DESCRIPTION', placeholder: 'A dragon flying over a futuristic city', required: true }] }, keywords: 'writecream image generate art ai' },
+    { id: 'nano-banana', methods: ['POST'], path: '/api/image/nano-banana', title: 'Nano Banana Generator', description: 'Fast AI image generation engine. Returns a high-quality hosted image URL from a text prompt.',                                                   codeEndpointUrl: `${EDGE}/damini-image`, codeBody: '{ "prompt": "A futuristic city at night", "engine": "nano-banana" }',          tester: { type: 'image', engine: 'nano-banana' }, keywords: 'image generation nano banana art' },
+    { id: 'flux-pro',    methods: ['POST'], path: '/api/image/flux-pro',    title: 'Flux Pro Generator',    description: 'Professional high-fidelity image generation. Ideal for product visuals, creative work, and detailed scenes.',                                    codeEndpointUrl: `${EDGE}/damini-image`, codeBody: '{ "prompt": "Cinematic portrait in golden hour", "engine": "flux-pro" }',    tester: { type: 'image', engine: 'flux-pro' },    keywords: 'flux pro image generation professional' },
+    {
+      id: 'animagine', methods: ['GET'], path: '/api/ai/animagine', title: 'Animagine Generator',
+      description: 'Anime-style AI image generation. Produces high-quality anime art from a text prompt. Returns a hosted image URL.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/ai/animagine`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/animagine?prompt=anime girl with silver hair" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/animagine`, params: [{ key: 'prompt', label: 'IMAGE DESCRIPTION', placeholder: 'Anime girl with silver hair and glowing eyes', required: true }] },
+      keywords: 'animagine anime image generate art ai',
+    },
+    {
+      id: 'fluxv2', methods: ['GET'], path: '/api/ai/fluxv2', title: 'Flux V2 Generator',
+      description: 'Second-generation Flux image engine. High-resolution photorealistic output. Returns a hosted image URL from a text prompt.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/ai/fluxv2`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/fluxv2?prompt=Mountain lake at dawn" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/fluxv2`, params: [{ key: 'prompt', label: 'IMAGE DESCRIPTION', placeholder: 'Mountain lake at dawn, photorealistic', required: true }] },
+      keywords: 'flux v2 image generate photorealistic art ai',
+    },
+    {
+      id: 'writecream-image', methods: ['GET'], path: '/api/ai/writecream-image', title: 'Writecream Image Generator',
+      description: 'Text-to-image with aspect ratio control. Options: 1:1, 16:9, 9:16, 4:3. Returns a direct canvas resource URL.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/ai/writecream-image`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/writecream-image?prompt=A dragon flying&ratio=16:9" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/writecream-image`, params: [
+        { key: 'prompt', label: 'IMAGE DESCRIPTION', placeholder: 'A dragon flying over a futuristic city', required: true },
+        { key: 'ratio',  label: 'ASPECT RATIO (1:1 / 16:9 / 9:16 / 4:3)', placeholder: '1:1' },
+      ]},
+      keywords: 'writecream image generate art ratio canvas ai',
+    },
   ];
 
   // AI MUSIC
@@ -909,8 +940,8 @@ export default function Index() {
       description: 'AI-generated ambient and genre music. Specify mood or genre and duration in seconds. Returns a hosted audio track link.',
       codeEndpointUrl: `${BACKEND_BASE}/mubert`, codeBody: `{ "url": "${BACKEND_BASE}/mubert?prompt=Lo-fi&duration=30" }`,
       tester: { type: 'get', baseUrl: `${BACKEND_BASE}/mubert`, params: [
-        { key: 'prompt', label: 'GENRE / MOOD', placeholder: 'Lo-fi chill', required: true },
-        { key: 'duration', label: 'DURATION (seconds)', placeholder: '30' },
+        { key: 'prompt',   label: 'GENRE / MOOD',        placeholder: 'Lo-fi chill', required: true },
+        { key: 'duration', label: 'DURATION (seconds)',   placeholder: '30' },
       ]},
       keywords: 'mubert music ai generate ambient genre audio',
     },
@@ -1007,10 +1038,66 @@ export default function Index() {
   // MEDIA
   const mediaEps: EndpointDef[] = [
     {
-      id: 'ttdl', methods: ['POST'], path: '/api/media/download', title: 'Video Downloader',
-      description: 'Extract unwatermarked MP4 links from TikTok and social platforms. Returns HD URL, cover, author, duration, and engagement stats.',
+      id: 'ttdl', methods: ['POST'], path: '/api/media/download', title: 'TikTok Downloader (No Watermark)',
+      description: 'Extract unwatermarked MP4 links from TikTok. Returns HD URL, cover, author, duration, and engagement stats.',
       codeEndpointUrl: `${EDGE}/damini-ttdl`, codeBody: '{ "url": "https://www.tiktok.com/@user/video/12345" }',
       tester: { type: 'ttdl' }, keywords: 'tiktok video download no watermark hd social media',
+    },
+    {
+      id: 'tiktok-v2', methods: ['GET'], path: '/api/download/tiktokv2', title: 'TikTok Downloader V2',
+      description: 'Alternative TikTok downloader engine. Returns video metadata and download link without watermark.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/download/tiktokv2`, codeBody: `{ "url": "${BACKEND_BASE}/api/download/tiktokv2?url=https://tiktok.com/..." }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/download/tiktokv2`, params: [{ key: 'url', label: 'TIKTOK URL', placeholder: 'https://www.tiktok.com/@user/video/...', required: true }] },
+      keywords: 'tiktok v2 download video no watermark media',
+    },
+    {
+      id: 'instagram-dl', methods: ['GET'], path: '/api/download/instagram', title: 'Instagram Downloader',
+      description: 'Download Instagram reels, posts, and stories. Returns media URL and metadata.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/download/instagram`, codeBody: `{ "url": "${BACKEND_BASE}/api/download/instagram?url=https://instagram.com/..." }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/download/instagram`, params: [{ key: 'url', label: 'INSTAGRAM URL', placeholder: 'https://www.instagram.com/p/...', required: true }] },
+      keywords: 'instagram reel post story download media',
+    },
+    {
+      id: 'facebook-dl', methods: ['GET'], path: '/api/download/facebook', title: 'Facebook Downloader',
+      description: 'Download Facebook videos and media assets. Returns HD and SD download links.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/download/facebook`, codeBody: `{ "url": "${BACKEND_BASE}/api/download/facebook?url=https://facebook.com/..." }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/download/facebook`, params: [{ key: 'url', label: 'FACEBOOK URL', placeholder: 'https://www.facebook.com/watch?v=...', required: true }] },
+      keywords: 'facebook video download media',
+    },
+    {
+      id: 'facebook-dl2', methods: ['GET'], path: '/api/download/facebook2', title: 'Facebook Downloader V2',
+      description: 'Alternative Facebook extraction engine. Returns direct media links — use if V1 fails for a URL.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/download/facebook2`, codeBody: `{ "url": "${BACKEND_BASE}/api/download/facebook2?url=https://facebook.com/..." }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/download/facebook2`, params: [{ key: 'url', label: 'FACEBOOK URL', placeholder: 'https://www.facebook.com/watch?v=...', required: true }] },
+      keywords: 'facebook v2 video download media fallback',
+    },
+    {
+      id: 'twitter-dl', methods: ['GET'], path: '/api/download/twitter', title: 'Twitter/X Downloader',
+      description: 'Download Twitter and X video posts. Returns MP4 download URL and metadata.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/download/twitter`, codeBody: `{ "url": "${BACKEND_BASE}/api/download/twitter?url=https://x.com/..." }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/download/twitter`, params: [{ key: 'url', label: 'TWITTER/X URL', placeholder: 'https://x.com/user/status/...', required: true }] },
+      keywords: 'twitter x video download media social',
+    },
+    {
+      id: 'youtube-dl', methods: ['GET'], path: '/api/download/ytv3', title: 'YouTube Downloader V3',
+      description: 'Download YouTube videos in multiple quality formats. Returns stream URLs and format metadata.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/download/ytv3`, codeBody: `{ "url": "${BACKEND_BASE}/api/download/ytv3?url=https://youtube.com/watch?v=..." }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/download/ytv3`, params: [{ key: 'url', label: 'YOUTUBE URL', placeholder: 'https://www.youtube.com/watch?v=...', required: true }] },
+      keywords: 'youtube video download v3 stream media',
+    },
+    {
+      id: 'mediafire-dl', methods: ['GET'], path: '/api/download/mediafire', title: 'Mediafire Downloader',
+      description: 'Resolve and extract direct download links from Mediafire file hosting. Returns filename and direct URL.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/download/mediafire`, codeBody: `{ "url": "${BACKEND_BASE}/api/download/mediafire?url=https://mediafire.com/..." }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/download/mediafire`, params: [{ key: 'url', label: 'MEDIAFIRE URL', placeholder: 'https://www.mediafire.com/file/...', required: true }] },
+      keywords: 'mediafire download file link resolve',
+    },
+    {
+      id: 'pinterest-dl', methods: ['GET'], path: '/api/download/pinterest', title: 'Pinterest Downloader',
+      description: 'Extract original-resolution images and videos from Pinterest pins. Returns direct asset URL.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/download/pinterest`, codeBody: `{ "url": "${BACKEND_BASE}/api/download/pinterest?url=https://pinterest.com/pin/..." }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/download/pinterest`, params: [{ key: 'url', label: 'PINTEREST URL', placeholder: 'https://www.pinterest.com/pin/...', required: true }] },
+      keywords: 'pinterest image video download pin asset',
     },
     {
       id: 'spotify', methods: ['GET'], path: '/api/Search/Spotify', title: 'Spotify Search',
@@ -1018,7 +1105,7 @@ export default function Index() {
       codeEndpointUrl: `${BACKEND_BASE}/api/Search/Spotify`, codeBody: `{ "url": "${BACKEND_BASE}/api/Search/Spotify?action=search&query=Bohemian Rhapsody" }`,
       tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/Search/Spotify`, params: [
         { key: 'action', label: 'ACTION', placeholder: 'search' },
-        { key: 'query', label: 'SONG TITLE', placeholder: 'Bohemian Rhapsody', required: true },
+        { key: 'query',  label: 'SONG TITLE', placeholder: 'Bohemian Rhapsody', required: true },
       ]},
       keywords: 'spotify track search discover music song',
     },
@@ -1038,11 +1125,11 @@ export default function Index() {
       description: 'Generate a realistic fake tweet image. Specify display name, username, tweet text, avatar URL, and verified status.',
       codeEndpointUrl: `${BACKEND_BASE}/api/Maker/fake-tweet`, codeBody: `{ "url": "${BACKEND_BASE}/api/Maker/fake-tweet?name=Elon&username=elonmusk&comment=Hello+world&verified=true" }`,
       tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/Maker/fake-tweet`, params: [
-        { key: 'name',     label: 'DISPLAY NAME',       placeholder: 'Elon Musk',     required: true },
-        { key: 'username', label: 'USERNAME',            placeholder: 'elonmusk',      required: true },
-        { key: 'comment',  label: 'TWEET TEXT',          placeholder: 'This is a test tweet.' },
-        { key: 'avatar',   label: 'AVATAR URL',          placeholder: 'https://...' },
-        { key: 'verified', label: 'VERIFIED (true/false)', placeholder: 'true' },
+        { key: 'name',     label: 'DISPLAY NAME',           placeholder: 'Elon Musk',              required: true },
+        { key: 'username', label: 'USERNAME',                placeholder: 'elonmusk',               required: true },
+        { key: 'comment',  label: 'TWEET TEXT',              placeholder: 'This is a test tweet.' },
+        { key: 'avatar',   label: 'AVATAR URL',              placeholder: 'https://...' },
+        { key: 'verified', label: 'VERIFIED (true/false)',   placeholder: 'true' },
       ]},
       keywords: 'fake tweet twitter maker image social',
     },
@@ -1056,6 +1143,38 @@ export default function Index() {
       codeEndpointUrl: `${BACKEND_BASE}/api/ai/Ai-research`, codeBody: `{ "url": "${BACKEND_BASE}/api/ai/Ai-research?message=Elon+Musk" }`,
       tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/ai/Ai-research`, params: [{ key: 'message', label: 'RESEARCH QUERY', placeholder: 'Elon Musk latest projects', required: true }] },
       keywords: 'webpilot research web search ai sources citations deep',
+    },
+  ];
+
+  // FUN / INTERACTIVE
+  const funEps: EndpointDef[] = [
+    {
+      id: 'truth', methods: ['GET'], path: '/truth', title: 'Truth Generator',
+      description: 'Returns a random truth-or-dare style truth question. No parameters needed — fire and receive.',
+      codeEndpointUrl: `${BACKEND_BASE}/truth`, codeBody: `{ "url": "${BACKEND_BASE}/truth" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/truth`, params: [] },
+      keywords: 'truth dare fun interactive random question game',
+    },
+    {
+      id: 'dare', methods: ['GET'], path: '/dare', title: 'Dare Generator',
+      description: 'Returns a random dare challenge string. Call with no parameters to receive a fresh dare.',
+      codeEndpointUrl: `${BACKEND_BASE}/dare`, codeBody: `{ "url": "${BACKEND_BASE}/dare" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/dare`, params: [] },
+      keywords: 'dare truth fun interactive random challenge game',
+    },
+    {
+      id: 'pickupline', methods: ['GET'], path: '/pickupline', title: 'Pick-Up Line Engine',
+      description: 'Returns a random pick-up line. No parameters required — instant single string response.',
+      codeEndpointUrl: `${BACKEND_BASE}/pickupline`, codeBody: `{ "url": "${BACKEND_BASE}/pickupline" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/pickupline`, params: [] },
+      keywords: 'pickup line fun random flirt interactive generator',
+    },
+    {
+      id: 'fact', methods: ['GET'], path: '/fact', title: 'Random Fact Engine',
+      description: 'Returns a verified random interesting fact. No parameters required — instant string response.',
+      codeEndpointUrl: `${BACKEND_BASE}/fact`, codeBody: `{ "url": "${BACKEND_BASE}/fact" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/fact`, params: [] },
+      keywords: 'fact random knowledge fun interesting trivia',
     },
   ];
 
@@ -1082,19 +1201,20 @@ export default function Index() {
       e.keywords.includes(q) || e.title.toLowerCase().includes(q) || e.path.toLowerCase().includes(q)
     );
 
-  const fChat    = filter(aiChatEps);
-  const fImage   = filter(aiImageEps);
-  const fMusic   = filter(aiMusicEps);
-  const fVoice   = filter(aiVoiceEps);
-  const fAnime   = filter(animeEps);
-  const fMedia   = filter(mediaEps);
-  const fSocial  = filter(socialEps);
+  const fChat     = filter(aiChatEps);
+  const fImage    = filter(aiImageEps);
+  const fMusic    = filter(aiMusicEps);
+  const fVoice    = filter(aiVoiceEps);
+  const fAnime    = filter(animeEps);
+  const fMedia    = filter(mediaEps);
+  const fSocial   = filter(socialEps);
   const fResearch = filter(researchEps);
-  const fMail    = filter(mailEps);
+  const fFun      = filter(funEps);
+  const fMail     = filter(mailEps);
 
   const totalEndpoints =
     aiChatEps.length + aiImageEps.length + aiMusicEps.length + aiVoiceEps.length +
-    animeEps.length + mediaEps.length + socialEps.length + researchEps.length + mailEps.length;
+    animeEps.length + mediaEps.length + socialEps.length + researchEps.length + funEps.length + mailEps.length;
 
   const showAll = search.trim() !== '';
   const show = (cat: CategoryId) => showAll || activeCategory === 'overview' || activeCategory === cat;
@@ -1146,7 +1266,7 @@ export default function Index() {
   );
 
   const isOverview = activeCategory === 'overview' && !search;
-  const allFilteredEmpty = showAll && [fChat, fImage, fMusic, fVoice, fAnime, fMedia, fSocial, fResearch, fMail].every((l) => l.length === 0);
+  const allFilteredEmpty = showAll && [fChat, fImage, fMusic, fVoice, fAnime, fMedia, fSocial, fResearch, fFun, fMail].every((l) => l.length === 0);
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--canvas)', color: 'var(--text-primary)' }}>
@@ -1275,15 +1395,16 @@ export default function Index() {
           )}
 
           {/* Sections */}
-          <CategorySection id="ai-chat"  icon={MessageSquare} title="AI CHAT"         count={fChat.length}    description={`${aiChatEps.length} models — Gemini, GPT-5, Claude, DeepSeek, Llama, Blackbox, Meta, Perplexity`} endpoints={fChat}    onSuccess={onSuccess} visible={show('ai-chat')} />
-          <CategorySection id="ai-image" icon={ImageIcon}     title="AI IMAGE"        count={fImage.length}   description="Nano Banana, Flux Pro, Writecream — text-to-image generation"       endpoints={fImage}   onSuccess={onSuccess} visible={show('ai-image')} />
-          <CategorySection id="ai-music" icon={Music}         title="AI MUSIC"        count={fMusic.length}   description="Suno V3 full song generation · Mubert ambient music"               endpoints={fMusic}   onSuccess={onSuccess} visible={show('ai-music')} />
-          <CategorySection id="ai-voice" icon={Mic}           title="AI VOICE"        count={fVoice.length}   description="Standard TTS · ElevenLabs voice presets (Rachel, Drew, Clyde, Paul) · Premium multi-voice synthesis" endpoints={fVoice}   onSuccess={onSuccess} visible={show('ai-voice')} />
-          <CategorySection id="anime"    icon={Tv2}           title="ANIME"           count={fAnime.length}   description="Airing schedules · character search · series metadata and synopsis"  endpoints={fAnime}   onSuccess={onSuccess} visible={show('anime')} />
-          <CategorySection id="media"    icon={Film}          title="MEDIA"           count={fMedia.length}   description="Video downloader (no watermark) · Spotify search · SoundCloud search" endpoints={fMedia}   onSuccess={onSuccess} visible={show('media')} />
-          <CategorySection id="social"   icon={Twitter}       title="SOCIAL"          count={fSocial.length}  description="Fake tweet image generator with custom name, handle, and avatar"     endpoints={fSocial}  onSuccess={onSuccess} visible={show('social')} />
-          <CategorySection id="research" icon={Globe}         title="RESEARCH"        count={fResearch.length}description="WebPilot deep web research with cited sources"                      endpoints={fResearch} onSuccess={onSuccess} visible={show('research')} />
-          <CategorySection id="tempmail" icon={Mail}          title="TEMP MAIL"       count={fMail.length}    description="Disposable email addresses via live GuerrillaMail integration"     endpoints={fMail}    onSuccess={onSuccess} visible={show('tempmail')} />
+          <CategorySection id="ai-chat"  icon={MessageSquare} title="AI CHAT"   count={fChat.length}    description={`${aiChatEps.length} models — Gemini, GPT-5, Claude, DeepSeek, Llama, Blackbox, Meta, Perplexity, Writecream`} endpoints={fChat}    onSuccess={onSuccess} visible={show('ai-chat')} />
+          <CategorySection id="ai-image" icon={ImageIcon}     title="AI IMAGE"  count={fImage.length}   description="Nano Banana · Flux Pro · Flux V2 · Animagine · Writecream Image — text-to-image generation"                    endpoints={fImage}   onSuccess={onSuccess} visible={show('ai-image')} />
+          <CategorySection id="ai-music" icon={Music}         title="AI MUSIC"  count={fMusic.length}   description="Suno V3 full song generation · Mubert ambient music"                                                            endpoints={fMusic}   onSuccess={onSuccess} visible={show('ai-music')} />
+          <CategorySection id="ai-voice" icon={Mic}           title="AI VOICE"  count={fVoice.length}   description="Standard TTS · ElevenLabs voice presets (Rachel, Drew, Clyde, Paul) · Premium multi-voice synthesis"           endpoints={fVoice}   onSuccess={onSuccess} visible={show('ai-voice')} />
+          <CategorySection id="anime"    icon={Tv2}           title="ANIME"     count={fAnime.length}   description="Airing schedules · character search · series metadata and synopsis"                                             endpoints={fAnime}   onSuccess={onSuccess} visible={show('anime')} />
+          <CategorySection id="media"    icon={Film}          title="MEDIA"     count={fMedia.length}   description="TikTok · Instagram · Facebook · Twitter · YouTube · Pinterest · Mediafire · Spotify · SoundCloud"              endpoints={fMedia}   onSuccess={onSuccess} visible={show('media')} />
+          <CategorySection id="social"   icon={Twitter}       title="SOCIAL"    count={fSocial.length}  description="Fake tweet image generator with custom name, handle, and avatar"                                               endpoints={fSocial}  onSuccess={onSuccess} visible={show('social')} />
+          <CategorySection id="research" icon={Globe}         title="RESEARCH"  count={fResearch.length} description="WebPilot deep web research with cited sources"                                                                 endpoints={fResearch} onSuccess={onSuccess} visible={show('research')} />
+          <CategorySection id="fun"      icon={Zap}           title="FUN"       count={fFun.length}     description="Truth · Dare · Pick-Up Lines · Random Facts — no parameters needed"                                           endpoints={fFun}     onSuccess={onSuccess} visible={show('fun')} />
+          <CategorySection id="tempmail" icon={Mail}          title="TEMP MAIL" count={fMail.length}    description="Disposable email addresses via live GuerrillaMail integration"                                                endpoints={fMail}    onSuccess={onSuccess} visible={show('tempmail')} />
 
           {/* No results */}
           {allFilteredEmpty && (
