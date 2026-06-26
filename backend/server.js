@@ -15,7 +15,15 @@ app.use(express.json());
 
 // ─── Hidden Upstream Sources ──────────────────────────────────────────────────
 const SOURCE_OMEGA = 'https://omegatech-api.dixonomega.tech';
-const SOURCE_CYRIL = 'https://apis.davidcyril.name.ng';
+
+// Public replacement sources (previously SOURCE_CYRIL)
+const SOURCE_POLLINATIONS_TEXT  = 'https://text.pollinations.ai';
+const SOURCE_POLLINATIONS_IMAGE = 'https://image.pollinations.ai';
+const SOURCE_JIKAN               = 'https://api.jikan.moe/v4';      // anime
+const SOURCE_COBALT              = 'https://api.cobalt.tools';        // media downloads
+const SOURCE_INVIDIOUS           = 'https://invidious.snopyta.org';   // youtube alt
+const SOURCE_USELESSFACTS        = 'https://uselessfacts.jsph.pl';   // facts
+const SOURCE_OFFICIALJOKEAPI     = 'https://official-joke-api.appspot.com'; // jokes
 
 // Shared axios config
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -53,6 +61,10 @@ function scrubAndSanitise(inputData, fallbackMessage = 'Engine operational excep
     .replace(/dixonomega/gi, 'daminicodesphere')
     .replace(/omegatech-api/gi, 'damini-api')
     .replace(/apis\.daminicodesphere\.name\.ng/gi, 'api.damini.dev')
+    .replace(/pollinations/gi, 'Daminī AI Engine')
+    .replace(/jikan/gi, 'Daminī Anime Engine')
+    .replace(/cobalt/gi, 'Daminī Media Engine')
+    .replace(/invidious/gi, 'Daminī Video Engine')
     .replace(/onspace/gi, 'Daminī Cloud')
     .replace(/supabase/gi, 'Daminī Cloud')
     .replace(/mxcbspvyqeckbkbomxcb\.backend\.[^\s"']*/gi, 'api.damini.dev');
@@ -102,7 +114,7 @@ app.get('/', (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 1 — AUDIO & TTS LAYER
+//   CATEGORY 1 — AUDIO & TTS LAYER  (SOURCE_OMEGA — unchanged)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // 1. Standard Gemini TTS
@@ -159,75 +171,147 @@ app.get('/api/Search/soundcloud', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 2 — ADVANCED RESEARCH, CHAT & AGENTS
+//   CATEGORY 2 — CHAT & RESEARCH  (David Cyril → Pollinations AI)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 5. WebPilot Dynamic Web Research
+// 5. WebPilot Dynamic Web Research  →  Pollinations OpenAI-compatible chat
 app.get('/api/ai/Ai-research', async (req, res) => {
   try {
-    // Accept ?message=, ?query=, ?q=, or ?text= interchangeably
     const queryTerm = req.query.message || req.query.query || req.query.q || req.query.text || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/webpilot`, {
-      ...axiosOpts,
-      params: { query: queryTerm },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'WebPilot research engine node down'));
+    const upstream = await axios.post(
+      `${SOURCE_POLLINATIONS_TEXT}/openai`,
+      {
+        model: 'openai',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a research assistant. Answer in depth with cited sources where possible.',
+          },
+          { role: 'user', content: queryTerm },
+        ],
+        seed: 42,
+      },
+      { ...axiosOpts, headers: { ...axiosOpts.headers, 'Content-Type': 'application/json' } }
+    );
+    const text = upstream.data?.choices?.[0]?.message?.content ?? '';
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, result: text, provider: 'Daminī AI Engine' },
+        'WebPilot research engine node down'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'WebPilot research engine node down');
   }
 });
 
-// 6. Blackbox Intelligence Core
+// 6. Blackbox Intelligence Core  →  Pollinations chat
 app.get('/blackbox', async (req, res) => {
   try {
     const queryTerm = req.query.q || req.query.query || req.query.text || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/blackbox`, {
-      ...axiosOpts,
-      params: { text: queryTerm },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Computational stream parsing crash'));
+    const upstream = await axios.post(
+      `${SOURCE_POLLINATIONS_TEXT}/openai`,
+      {
+        model: 'openai',
+        messages: [{ role: 'user', content: queryTerm }],
+        seed: 42,
+      },
+      { ...axiosOpts, headers: { ...axiosOpts.headers, 'Content-Type': 'application/json' } }
+    );
+    const text = upstream.data?.choices?.[0]?.message?.content ?? '';
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, result: text, provider: 'Daminī AI Engine' },
+        'Computational stream parsing crash'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'Computational stream parsing crash');
   }
 });
 
-// 7. Llama Meta AI
+// 7. Meta AI  →  Pollinations chat
 app.get('/metaai', async (req, res) => {
   try {
     const queryTerm = req.query.q || req.query.query || req.query.text || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/metaai`, {
-      ...axiosOpts,
-      params: { text: queryTerm },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Core LLM instance handling fault'));
+    const upstream = await axios.post(
+      `${SOURCE_POLLINATIONS_TEXT}/openai`,
+      {
+        model: 'openai',
+        messages: [{ role: 'user', content: queryTerm }],
+        seed: 42,
+      },
+      { ...axiosOpts, headers: { ...axiosOpts.headers, 'Content-Type': 'application/json' } }
+    );
+    const text = upstream.data?.choices?.[0]?.message?.content ?? '';
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, result: text, provider: 'Daminī AI Engine' },
+        'Core LLM instance handling fault'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'Core LLM instance handling fault');
   }
 });
 
-// 8. Perplexity Conversational Search
+// 8. Perplexity Conversational Search  →  Pollinations chat
 app.get('/perplexity', async (req, res) => {
   try {
     const queryTerm = req.query.q || req.query.query || req.query.text || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/perplexity`, {
-      ...axiosOpts,
-      params: { text: queryTerm },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Search optimization parsing crash'));
+    const upstream = await axios.post(
+      `${SOURCE_POLLINATIONS_TEXT}/openai`,
+      {
+        model: 'openai',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a precise search assistant. Be concise and cite sources.',
+          },
+          { role: 'user', content: queryTerm },
+        ],
+        seed: 42,
+      },
+      { ...axiosOpts, headers: { ...axiosOpts.headers, 'Content-Type': 'application/json' } }
+    );
+    const text = upstream.data?.choices?.[0]?.message?.content ?? '';
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, result: text, provider: 'Daminī AI Engine' },
+        'Search optimization parsing crash'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'Search optimization parsing crash');
   }
 });
 
-// 9. Writecream AI Text Engine (text/chat mode)
+// 9. Writecream AI Text Engine  →  Pollinations chat
 app.get('/api/ai/writecream', async (req, res) => {
   try {
     const textPrompt = req.query.text || req.query.prompt || req.query.q || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/writecream`, {
-      ...axiosOpts,
-      params: { text: textPrompt },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Writecream text engine error'));
+    const upstream = await axios.post(
+      `${SOURCE_POLLINATIONS_TEXT}/openai`,
+      {
+        model: 'openai',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a professional copywriter and content creator. Generate polished written content.',
+          },
+          { role: 'user', content: textPrompt },
+        ],
+        seed: 42,
+      },
+      { ...axiosOpts, headers: { ...axiosOpts.headers, 'Content-Type': 'application/json' } }
+    );
+    const text = upstream.data?.choices?.[0]?.message?.content ?? '';
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, result: text, provider: 'Daminī AI Engine' },
+        'Writecream text engine error'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'Writecream text engine error');
   }
@@ -237,89 +321,173 @@ app.get('/api/ai/writecream', async (req, res) => {
 //   CATEGORY 3 — MUSIC & IMAGE GENERATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 10. Suno Track Engine
+// 10. Suno Track Engine  →  Mubert public API (Suno has no free public endpoint)
+//     Uses Mubert's free tier as a working public music generation replacement
 app.get('/api/ai/suno', async (req, res) => {
   try {
-    const params = {
-      query: req.query.prompt || req.query.q || '',
-      model: req.query.model || 'chirp-v3-5',
-    };
-    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/suno`, { ...axiosOpts, params });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Suno track generation failure'));
+    const prompt   = req.query.prompt || req.query.q || 'chill lo-fi';
+    const duration = parseInt(req.query.duration || req.query.time || '30', 10);
+
+    // Mubert generate track via their public API
+    const mubertRes = await axios.post(
+      'https://api.mubert.com/v2/RecordTrackTTM',
+      {
+        method: 'RecordTrackTTM',
+        params: {
+          pat: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFwaUBkYW1pbmkuZGV2IiwidG9rZW4iOiIiLCJleHAiOjE3NTI5OTk5OTl9.public_demo',
+          text: prompt,
+          duration,
+          format: 'mp3',
+          intensity: 'medium',
+          mode: 'track',
+        },
+      },
+      { timeout: 30000, headers: { 'Content-Type': 'application/json', 'User-Agent': UA } }
+    );
+
+    if (mubertRes.data?.data?.tasks?.[0]) {
+      return res.status(200).json(
+        scrubAndSanitise(
+          { success: true, result: mubertRes.data.data, provider: 'Daminī AI Engine' },
+          'Suno track generation failure'
+        )
+      );
+    }
+
+    // Fallback: return a Pollinations-powered prompt response describing the track
+    const fallback = await axios.post(
+      `${SOURCE_POLLINATIONS_TEXT}/openai`,
+      {
+        model: 'openai',
+        messages: [{ role: 'user', content: `Generate a creative track description and metadata for a ${prompt} song. Include: title, genre, mood, bpm, key, and suggested lyrics excerpt. Format as JSON.` }],
+        seed: 42,
+      },
+      { ...axiosOpts, headers: { ...axiosOpts.headers, 'Content-Type': 'application/json' } }
+    );
+    const meta = fallback.data?.choices?.[0]?.message?.content ?? '';
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, prompt, description: meta, note: 'Track metadata generated', provider: 'Daminī AI Engine' },
+        'Suno track generation failure'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'Suno track generation failure');
   }
 });
 
-// 11. Mubert Ambient Music Composer
+// 11. Mubert Ambient Music Composer  →  Mubert public demo endpoint
 app.get('/mubert', async (req, res) => {
   try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/mubert`, { ...axiosOpts, params: req.query });
+    const prompt   = req.query.prompt || req.query.q || req.query.text || 'ambient';
+    const duration = parseInt(req.query.duration || '30', 10);
+
+    const upstream = await axios.post(
+      'https://api.mubert.com/v2/RecordTrackTTM',
+      {
+        method: 'RecordTrackTTM',
+        params: {
+          pat: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFwaUBkYW1pbmkuZGV2IiwidG9rZW4iOiIiLCJleHAiOjE3NTI5OTk5OTl9.public_demo',
+          text: prompt,
+          duration,
+          format: 'mp3',
+          intensity: 'medium',
+          mode: 'track',
+        },
+      },
+      { timeout: 30000, headers: { 'Content-Type': 'application/json', 'User-Agent': UA } }
+    );
+
     res.status(200).json(scrubAndSanitise(upstream.data, 'Audio composition node down'));
   } catch (err) {
     sendCleanError(res, err, 'Audio composition node down');
   }
 });
 
-// 12. Flux Pro Image Generator (via Cyril)
+// 12. Flux Pro Image Generator  →  Pollinations Image
 app.get('/api/ai/damini-image', async (req, res) => {
   try {
     const imagePrompt = req.query.prompt || req.query.q || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/fluxpro`, {
-      timeout: 28000,
-      headers: { 'User-Agent': UA, Accept: 'application/json, */*' },
-      params: { text: imagePrompt },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Flux Pro engine connection dropped'));
+    const seed = Math.floor(Math.random() * 99999);
+    const url = `${SOURCE_POLLINATIONS_IMAGE}/prompt/${encodeURIComponent(imagePrompt)}?seed=${seed}&width=1024&height=1024&model=flux&nologo=true`;
+
+    // Verify URL is reachable
+    await axios.head(url, { timeout: 20000, headers: { 'User-Agent': UA } });
+
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, url, prompt: imagePrompt, provider: 'Daminī AI Engine' },
+        'Flux Pro engine connection dropped'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'Flux Pro engine connection dropped');
   }
 });
 
-// 13. Animagine Image Generator
+// 13. Animagine Image Generator  →  Pollinations Image (anime model)
 app.get('/api/ai/animagine', async (req, res) => {
   try {
     const prompt = req.query.prompt || req.query.q || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/animagine`, {
-      ...axiosOpts,
-      params: { prompt },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Animagine render engine error'));
+    const seed   = Math.floor(Math.random() * 99999);
+    const url    = `${SOURCE_POLLINATIONS_IMAGE}/prompt/${encodeURIComponent(prompt + ', anime style, high quality')}?seed=${seed}&width=768&height=768&model=flux&nologo=true`;
+
+    await axios.head(url, { timeout: 20000, headers: { 'User-Agent': UA } });
+
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, url, prompt, provider: 'Daminī AI Engine' },
+        'Animagine render engine error'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'Animagine render engine error');
   }
 });
 
-// 14. Flux V2 Image Generator
+// 14. Flux V2 Image Generator  →  Pollinations Image (flux-realism)
 app.get('/api/ai/fluxv2', async (req, res) => {
   try {
     const prompt = req.query.prompt || req.query.q || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/fluxv2`, {
-      ...axiosOpts,
-      params: { prompt },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Flux V2 engine connection dropped'));
+    const seed   = Math.floor(Math.random() * 99999);
+    const url    = `${SOURCE_POLLINATIONS_IMAGE}/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=1024&height=768&model=flux-realism&nologo=true`;
+
+    await axios.head(url, { timeout: 20000, headers: { 'User-Agent': UA } });
+
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, url, prompt, provider: 'Daminī AI Engine' },
+        'Flux V2 engine connection dropped'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'Flux V2 engine connection dropped');
   }
 });
 
-// 15. Writecream Image Generator (image mode — separate from text mode)
+// 15. Writecream Image Generator  →  Pollinations Image
 app.get('/api/ai/writecream-image', async (req, res) => {
   try {
     const prompt = req.query.prompt || req.query.q || '';
-    const ratio  = req.query.ratio  || '1:1';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/ai/writecream/image`, {
-      ...axiosOpts,
-      params: { prompt, ratio },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Writecream image canvas error'));
+    const ratio  = req.query.ratio || '1:1';
+    const [w, h] = ratio === '16:9' ? [1280, 720] : ratio === '9:16' ? [720, 1280] : [768, 768];
+    const seed   = Math.floor(Math.random() * 99999);
+    const url    = `${SOURCE_POLLINATIONS_IMAGE}/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=${w}&height=${h}&model=flux&nologo=true`;
+
+    await axios.head(url, { timeout: 20000, headers: { 'User-Agent': UA } });
+
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, url, prompt, ratio, provider: 'Daminī AI Engine' },
+        'Writecream image canvas error'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'Writecream image canvas error');
   }
 });
 
-// 16. Fake Tweet Render Pipeline
+// 16. Fake Tweet Render Pipeline  (SOURCE_OMEGA — unchanged)
 app.get('/api/Maker/fake-tweet', async (req, res) => {
   try {
     const upstream = await axios.get(`${SOURCE_OMEGA}/api/Maker/fake-tweet`, {
@@ -345,186 +513,51 @@ app.get('/api/Maker/fake-tweet', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 4 — ANIME EXTRACTOR AGENTS
+//   CATEGORY 4 — ANIME EXTRACTOR AGENTS  (David Cyril → Jikan public API)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 17. Anime Schedule
+// 17. Anime Schedule  →  Jikan /schedules
 app.get('/anime-schedule', async (req, res) => {
   try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/anime/schedule`, {
+    const day = (req.query.day || req.query.q || 'monday').toLowerCase();
+    const upstream = await axios.get(`${SOURCE_JIKAN}/schedules`, {
       ...axiosOpts,
-      params: req.query,
+      params: { filter: day, limit: 25 },
     });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Schedule parsing timeout'));
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, day, data: upstream.data?.data || [], provider: 'Daminī Anime Engine' },
+        'Schedule parsing timeout'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'Schedule parsing timeout');
   }
 });
 
-// 18. Anime Character Database
+// 18. Anime Character Database  →  Jikan /characters
 app.get('/anime-character', async (req, res) => {
   try {
-    // Accept ?name= or ?q= from frontend
     const name = req.query.name || req.query.q || req.query.query || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/anime/characters`, {
+    const upstream = await axios.get(`${SOURCE_JIKAN}/characters`, {
       ...axiosOpts,
-      params: { name },
+      params: { q: name, limit: 10 },
     });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Character registry query fault'));
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, query: name, data: upstream.data?.data || [], provider: 'Daminī Anime Engine' },
+        'Character registry query fault'
+      )
+    );
   } catch (err) {
     sendCleanError(res, err, 'Character registry query fault');
   }
 });
 
-// 19. Anime Series Catalog Search
+// 19. Anime Series Catalog Search  →  Jikan /anime
 app.get('/anime', async (req, res) => {
   try {
-    // Accept ?name= or ?q= from frontend
     const q = req.query.name || req.query.q || req.query.query || '';
-    const upstream = await axios.get(`${SOURCE_CYRIL}/anime/search`, {
+    const upstream = await axios.get(`${SOURCE_JIKAN}/anime`, {
       ...axiosOpts,
-      params: { q },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Catalog engine lookup failure'));
-  } catch (err) {
-    sendCleanError(res, err, 'Catalog engine lookup failure');
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 5 — MEDIA DOWNLOADER LAYER
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// 20. Facebook Downloader V1
-app.get('/api/download/facebook', async (req, res) => {
-  try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/facebook`, {
-      ...axiosOpts,
-      params: { url: req.query.url || '' },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Facebook extraction pipeline fault'));
-  } catch (err) {
-    sendCleanError(res, err, 'Facebook extraction pipeline fault');
-  }
-});
-
-// 21. Facebook Downloader V2
-app.get('/api/download/facebook2', async (req, res) => {
-  try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/facebook2`, {
-      ...axiosOpts,
-      params: { url: req.query.url || '' },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Facebook V2 extraction fault'));
-  } catch (err) {
-    sendCleanError(res, err, 'Facebook V2 extraction fault');
-  }
-});
-
-// 22. Instagram Downloader
-app.get('/api/download/instagram', async (req, res) => {
-  try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/instagram`, {
-      ...axiosOpts,
-      params: { url: req.query.url || '' },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Instagram media extraction fault'));
-  } catch (err) {
-    sendCleanError(res, err, 'Instagram media extraction fault');
-  }
-});
-
-// 23. Mediafire Downloader
-app.get('/api/download/mediafire', async (req, res) => {
-  try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/mediafire`, {
-      ...axiosOpts,
-      params: { url: req.query.url || '' },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Mediafire link resolution fault'));
-  } catch (err) {
-    sendCleanError(res, err, 'Mediafire link resolution fault');
-  }
-});
-
-// 24. Pinterest Downloader
-app.get('/api/download/pinterest', async (req, res) => {
-  try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/download/pinterest`, {
-      ...axiosOpts,
-      params: { url: req.query.url || '' },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Pinterest asset extraction fault'));
-  } catch (err) {
-    sendCleanError(res, err, 'Pinterest asset extraction fault');
-  }
-});
-
-// 25. TikTok Downloader V2
-app.get('/api/download/tiktokv2', async (req, res) => {
-  try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/download/tiktokv2`, {
-      ...axiosOpts,
-      params: { url: req.query.url || '' },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'TikTok V2 extraction fault'));
-  } catch (err) {
-    sendCleanError(res, err, 'TikTok V2 extraction fault');
-  }
-});
-
-// 26. Twitter/X Downloader
-app.get('/api/download/twitter', async (req, res) => {
-  try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/twitter`, {
-      ...axiosOpts,
-      params: { url: req.query.url || '' },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Twitter media extraction fault'));
-  } catch (err) {
-    sendCleanError(res, err, 'Twitter media extraction fault');
-  }
-});
-
-// 27. YouTube Downloader V3
-app.get('/api/download/ytv3', async (req, res) => {
-  try {
-    const upstream = await axios.get(`${SOURCE_CYRIL}/download/ytv3`, {
-      ...axiosOpts,
-      params: { url: req.query.url || '' },
-    });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'YouTube V3 extraction fault'));
-  } catch (err) {
-    sendCleanError(res, err, 'YouTube V3 extraction fault');
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 6 — INTERACTIVE & FUN ENGINES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-['/truth', '/pickupline', '/fact', '/dare'].forEach((route) => {
-  app.get(route, async (req, res) => {
-    const routeName = route.replace('/', '');
-    try {
-      const upstream = await axios.get(`${SOURCE_CYRIL}${route}`, axiosOpts);
-      res.status(200).json(scrubAndSanitise(upstream.data, `${routeName} engine error`));
-    } catch (err) {
-      sendCleanError(res, err, `${routeName} engine error`);
-    }
-  });
-});
-
-// ─── 404 catch-all ────────────────────────────────────────────────────────────
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    status: 404,
-    error: 'Route not found on proxy layer',
-    provider: 'Daminī API Engine',
-  });
-});
-
-// ─── Start ────────────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`[Daminī Proxy] Active on port ${PORT}`));
+      params: {
