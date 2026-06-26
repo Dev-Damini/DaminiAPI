@@ -560,4 +560,239 @@ app.get('/anime', async (req, res) => {
     const q = req.query.name || req.query.q || req.query.query || '';
     const upstream = await axios.get(`${SOURCE_JIKAN}/anime`, {
       ...axiosOpts,
-      params: {
+      params: { q, limit: 10 },
+    });
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, query: q, data: upstream.data?.data || [], provider: 'Daminī Anime Engine' },
+        'Catalog engine lookup failure'
+      )
+    );
+  } catch (err) {
+    sendCleanError(res, err, 'Catalog engine lookup failure');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//   CATEGORY 5 — MEDIA DOWNLOADER LAYER  (David Cyril → Cobalt.tools)
+//   Cobalt is a free, open-source public media downloader API
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Helper: call Cobalt API
+async function cobaltDownload(url) {
+  const res = await axios.post(
+    `${SOURCE_COBALT}/`,
+    { url, videoQuality: 'max', audioFormat: 'mp3', filenameStyle: 'pretty' },
+    {
+      timeout: 25000,
+      headers: {
+        'User-Agent': UA,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  return res;
+}
+
+// 20. Facebook Downloader V1  →  Cobalt
+app.get('/api/download/facebook', async (req, res) => {
+  try {
+    const upstream = await cobaltDownload(req.query.url || '');
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Facebook extraction pipeline fault'));
+  } catch (err) {
+    sendCleanError(res, err, 'Facebook extraction pipeline fault');
+  }
+});
+
+// 21. Facebook Downloader V2  →  Cobalt (same engine, alias route)
+app.get('/api/download/facebook2', async (req, res) => {
+  try {
+    const upstream = await cobaltDownload(req.query.url || '');
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Facebook V2 extraction fault'));
+  } catch (err) {
+    sendCleanError(res, err, 'Facebook V2 extraction fault');
+  }
+});
+
+// 22. Instagram Downloader  →  Cobalt
+app.get('/api/download/instagram', async (req, res) => {
+  try {
+    const upstream = await cobaltDownload(req.query.url || '');
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Instagram media extraction fault'));
+  } catch (err) {
+    sendCleanError(res, err, 'Instagram media extraction fault');
+  }
+});
+
+// 23. Mediafire Downloader  →  Cobalt
+app.get('/api/download/mediafire', async (req, res) => {
+  try {
+    const upstream = await cobaltDownload(req.query.url || '');
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Mediafire link resolution fault'));
+  } catch (err) {
+    sendCleanError(res, err, 'Mediafire link resolution fault');
+  }
+});
+
+// 24. Pinterest Downloader  →  Cobalt
+app.get('/api/download/pinterest', async (req, res) => {
+  try {
+    const upstream = await cobaltDownload(req.query.url || '');
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Pinterest asset extraction fault'));
+  } catch (err) {
+    sendCleanError(res, err, 'Pinterest asset extraction fault');
+  }
+});
+
+// 25. TikTok Downloader V2  →  Cobalt
+app.get('/api/download/tiktokv2', async (req, res) => {
+  try {
+    const upstream = await cobaltDownload(req.query.url || '');
+    res.status(200).json(scrubAndSanitise(upstream.data, 'TikTok V2 extraction fault'));
+  } catch (err) {
+    sendCleanError(res, err, 'TikTok V2 extraction fault');
+  }
+});
+
+// 26. Twitter/X Downloader  →  Cobalt
+app.get('/api/download/twitter', async (req, res) => {
+  try {
+    const upstream = await cobaltDownload(req.query.url || '');
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Twitter media extraction fault'));
+  } catch (err) {
+    sendCleanError(res, err, 'Twitter media extraction fault');
+  }
+});
+
+// 27. YouTube Downloader V3  →  Cobalt
+app.get('/api/download/ytv3', async (req, res) => {
+  try {
+    const upstream = await cobaltDownload(req.query.url || '');
+    res.status(200).json(scrubAndSanitise(upstream.data, 'YouTube V3 extraction fault'));
+  } catch (err) {
+    sendCleanError(res, err, 'YouTube V3 extraction fault');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//   CATEGORY 6 — INTERACTIVE & FUN ENGINES  (David Cyril → public APIs)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// 28. Random Fact  →  UselessFacts public API
+app.get('/fact', async (req, res) => {
+  try {
+    const upstream = await axios.get(`${SOURCE_USELESSFACTS}/api/v2/facts/random?language=en`, axiosOpts);
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, result: upstream.data?.text || '', provider: 'Daminī API Engine' },
+        'fact engine error'
+      )
+    );
+  } catch (err) {
+    sendCleanError(res, err, 'fact engine error');
+  }
+});
+
+// 29. Random Joke  →  Official Joke API (public)
+//     (previously /truth route — Cyril had no public joke API; this is a real working replacement)
+app.get('/joke', async (req, res) => {
+  try {
+    const upstream = await axios.get(`${SOURCE_OFFICIALJOKEAPI}/random_joke`, axiosOpts);
+    const joke = upstream.data;
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, setup: joke?.setup, punchline: joke?.punchline, result: `${joke?.setup} ... ${joke?.punchline}`, provider: 'Daminī API Engine' },
+        'joke engine error'
+      )
+    );
+  } catch (err) {
+    sendCleanError(res, err, 'joke engine error');
+  }
+});
+
+// 30. Truth Generator  →  Pollinations AI generated truth question
+app.get('/truth', async (req, res) => {
+  try {
+    const upstream = await axios.post(
+      `${SOURCE_POLLINATIONS_TEXT}/openai`,
+      {
+        model: 'openai',
+        messages: [{ role: 'user', content: 'Give me one creative and interesting truth question for a truth or dare game. Return only the question, nothing else.' }],
+        seed: Math.floor(Math.random() * 9999),
+      },
+      { ...axiosOpts, headers: { ...axiosOpts.headers, 'Content-Type': 'application/json' } }
+    );
+    const text = upstream.data?.choices?.[0]?.message?.content ?? '';
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, result: text.trim(), provider: 'Daminī API Engine' },
+        'truth engine error'
+      )
+    );
+  } catch (err) {
+    sendCleanError(res, err, 'truth engine error');
+  }
+});
+
+// 31. Dare Generator  →  Pollinations AI generated dare
+app.get('/dare', async (req, res) => {
+  try {
+    const upstream = await axios.post(
+      `${SOURCE_POLLINATIONS_TEXT}/openai`,
+      {
+        model: 'openai',
+        messages: [{ role: 'user', content: 'Give me one fun and creative dare challenge for a truth or dare game. Return only the dare, nothing else.' }],
+        seed: Math.floor(Math.random() * 9999),
+      },
+      { ...axiosOpts, headers: { ...axiosOpts.headers, 'Content-Type': 'application/json' } }
+    );
+    const text = upstream.data?.choices?.[0]?.message?.content ?? '';
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, result: text.trim(), provider: 'Daminī API Engine' },
+        'dare engine error'
+      )
+    );
+  } catch (err) {
+    sendCleanError(res, err, 'dare engine error');
+  }
+});
+
+// 32. Pick-Up Line Generator  →  Pollinations AI
+app.get('/pickupline', async (req, res) => {
+  try {
+    const upstream = await axios.post(
+      `${SOURCE_POLLINATIONS_TEXT}/openai`,
+      {
+        model: 'openai',
+        messages: [{ role: 'user', content: 'Give me one creative and funny pick-up line. Return only the pick-up line, nothing else.' }],
+        seed: Math.floor(Math.random() * 9999),
+      },
+      { ...axiosOpts, headers: { ...axiosOpts.headers, 'Content-Type': 'application/json' } }
+    );
+    const text = upstream.data?.choices?.[0]?.message?.content ?? '';
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, result: text.trim(), provider: 'Daminī API Engine' },
+        'pickupline engine error'
+      )
+    );
+  } catch (err) {
+    sendCleanError(res, err, 'pickupline engine error');
+  }
+});
+
+// ─── 404 catch-all ────────────────────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    status: 404,
+    error: 'Route not found on proxy layer',
+    provider: 'Daminī API Engine',
+  });
+});
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`[Daminī Proxy] Active on port ${PORT}`));
