@@ -24,6 +24,9 @@ const SOURCE_COBALT              = 'https://api.cobalt.tools';        // media d
 const SOURCE_INVIDIOUS           = 'https://invidious.snopyta.org';   // youtube alt
 const SOURCE_USELESSFACTS        = 'https://uselessfacts.jsph.pl';   // facts
 const SOURCE_OFFICIALJOKEAPI     = 'https://official-joke-api.appspot.com'; // jokes
+const SOURCE_MOVIE_DATA   = 'https://videodownloader.site';
+const SOURCE_STREAM_PRIMARY = 'https://embed.su/embed/movie';
+const SOURCE_STREAM_MIRROR  = 'https://vidsrc.to/embed/movie';
 
 // Shared axios config
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -782,7 +785,68 @@ app.get('/pickupline', async (req, res) => {
     sendCleanError(res, err, 'pickupline engine error');
   }
 });
+// ═══════════════════════════════════════════════════════════════════════════════
+//   CATEGORY 7 — CINEMA & MOVIE TRACKING CORE
+// ═══════════════════════════════════════════════════════════════════════════════
 
+// 33. Movie Database Search Index
+app.get('/api/cinema/search', async (req, res) => {
+  try {
+    const query = req.query.q || req.query.query || '';
+    const upstream = await axios.get(`${SOURCE_MOVIE_DATA}/search`, {
+      ...axiosOpts,
+      params: { q: query, type: 'movie' },
+    });
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Movie cluster search node unreachable'));
+  } catch (err) {
+    sendCleanError(res, err, 'Movie cluster search node unreachable');
+  }
+});
+
+// 34. Detailed Structural Asset Inventory
+app.get('/api/cinema/details', async (req, res) => {
+  try {
+    const subjectId = req.query.id || req.query.subject_id || '';
+    const upstream = await axios.get(`${SOURCE_MOVIE_DATA}/details`, {
+      ...axiosOpts,
+      params: { subject_id: subjectId },
+    });
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Asset metrics query failure'));
+  } catch (err) {
+    sendCleanError(res, err, 'Asset metrics query failure');
+  }
+});
+
+// 35. Primary Stream Frame Player Engine (Returns URL for Frontend Iframes)
+app.get('/api/cinema/stream', (req, res) => {
+  const tmdbId = req.query.tmdb_id || req.query.id || '';
+  if (!tmdbId) {
+    return res.status(400).json({ success: false, error: 'Missing parameter: tmdb_id' });
+  }
+  
+  // Directly masks upstream identities while constructing clean responses
+  res.status(200).json({
+    success: true,
+    streamUrl: `${SOURCE_STREAM_PRIMARY}/${tmdbId}`,
+    provider: 'Daminī Cinema Engine',
+    owner: 'Dev Daminī'
+  });
+});
+
+// 36. Alternative Mirror Cinema Frame Player
+app.get('/api/cinema/stream-mirror', (req, res) => {
+  const tmdbId = req.query.tmdb_id || req.query.id || '';
+  if (!tmdbId) {
+    return res.status(400).json({ success: false, error: 'Missing parameter: tmdb_id' });
+  }
+  
+  res.status(200).json({
+    success: true,
+    streamUrl: `${SOURCE_STREAM_MIRROR}/${tmdbId}`,
+    provider: 'Daminī Cinema Engine',
+    owner: 'Dev Daminī'
+  });
+});
 // ─── 404 catch-all ────────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({
