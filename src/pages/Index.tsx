@@ -6,7 +6,7 @@ import {
   Film, Music, Mail, Inbox, Eye, Heart, MessageSquare,
   Paperclip, X, Image as ImageIcon, Radio,
   Twitter, BarChart2, Globe, Play, Mic, Tv2, Headphones,
-  Sparkles, Layers, Zap,
+  Sparkles, Layers, Zap, Clapperboard,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import {
@@ -821,7 +821,7 @@ function AnalyticsChart({ refreshKey }: { refreshKey: number }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 //   MAIN PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
-type CategoryId = 'overview' | 'ai-chat' | 'ai-image' | 'ai-music' | 'ai-voice' | 'anime' | 'tempmail' | 'media' | 'social' | 'research' | 'fun';
+type CategoryId = 'overview' | 'ai-chat' | 'ai-image' | 'ai-music' | 'ai-voice' | 'anime' | 'tempmail' | 'media' | 'social' | 'research' | 'fun' | 'cinema';
 
 interface CategoryMeta {
   id: CategoryId;
@@ -841,6 +841,7 @@ const CATEGORIES: CategoryMeta[] = [
   { id: 'research',  icon: Globe,         label: 'Research'    },
   { id: 'fun',       icon: Zap,           label: 'Fun'         },
   { id: 'tempmail',  icon: Mail,          label: 'Temp Mail'   },
+  { id: 'cinema',    icon: Clapperboard,  label: 'Cinema'      },
 ];
 
 const EDGE = import.meta.env.VITE_EDGE_URL ?? 'https://mxcbspvyqeckbkbomxcb.backend.onspace.ai/functions/v1';
@@ -1196,6 +1197,42 @@ export default function Index() {
 
   // ── Search filter ─────────────────────────────────────────────────────────
   const q = search.toLowerCase().trim();
+  // CINEMA
+  const cinemaEps: EndpointDef[] = [
+    {
+      id: 'cinema-search', methods: ['GET'], path: '/api/cinema/search',
+      title: 'Movie Search Index',
+      description: 'Search the movie database by title or keyword. Returns a list of matched movies with titles, IDs, posters, and metadata.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/cinema/search`, codeBody: `{ "url": "${BACKEND_BASE}/api/cinema/search?q=inception" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/cinema/search`, params: [{ key: 'q', label: 'SEARCH QUERY', placeholder: 'Inception', required: true }] },
+      keywords: 'cinema movie search title film database',
+    },
+    {
+      id: 'cinema-details', methods: ['GET'], path: '/api/cinema/details',
+      title: 'Movie Detail Inspector',
+      description: 'Fetch full structural metadata for a specific movie by subject ID. Returns title, genre, cast, synopsis, rating, and poster.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/cinema/details`, codeBody: `{ "url": "${BACKEND_BASE}/api/cinema/details?id=tt1375666" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/cinema/details`, params: [{ key: 'id', label: 'SUBJECT ID', placeholder: 'tt1375666', required: true }] },
+      keywords: 'cinema movie details metadata cast synopsis film',
+    },
+    {
+      id: 'cinema-stream', methods: ['GET'], path: '/api/cinema/stream',
+      title: 'Primary Stream Player',
+      description: 'Returns an embed stream URL for a movie by TMDB ID. Use the returned streamUrl in an iframe to display the player. Primary Daminī Cinema Engine.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/cinema/stream`, codeBody: `{ "url": "${BACKEND_BASE}/api/cinema/stream?tmdb_id=27205" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/cinema/stream`, params: [{ key: 'tmdb_id', label: 'TMDB ID', placeholder: '27205', required: true }] },
+      keywords: 'cinema movie stream embed player tmdb film watch',
+    },
+    {
+      id: 'cinema-stream-mirror', methods: ['GET'], path: '/api/cinema/stream-mirror',
+      title: 'Mirror Stream Player',
+      description: 'Alternative embed stream URL via mirror engine for a movie by TMDB ID. Fallback source when primary stream is unavailable.',
+      codeEndpointUrl: `${BACKEND_BASE}/api/cinema/stream-mirror`, codeBody: `{ "url": "${BACKEND_BASE}/api/cinema/stream-mirror?tmdb_id=27205" }`,
+      tester: { type: 'get', baseUrl: `${BACKEND_BASE}/api/cinema/stream-mirror`, params: [{ key: 'tmdb_id', label: 'TMDB ID', placeholder: '27205', required: true }] },
+      keywords: 'cinema movie stream mirror embed player fallback film watch',
+    },
+  ];
+
   const filter = (list: EndpointDef[]) =>
     !q ? list : list.filter((e) =>
       e.keywords.includes(q) || e.title.toLowerCase().includes(q) || e.path.toLowerCase().includes(q)
@@ -1211,10 +1248,11 @@ export default function Index() {
   const fResearch = filter(researchEps);
   const fFun      = filter(funEps);
   const fMail     = filter(mailEps);
+  const fCinema   = filter(cinemaEps);
 
   const totalEndpoints =
     aiChatEps.length + aiImageEps.length + aiMusicEps.length + aiVoiceEps.length +
-    animeEps.length + mediaEps.length + socialEps.length + researchEps.length + funEps.length + mailEps.length;
+    animeEps.length + mediaEps.length + socialEps.length + researchEps.length + funEps.length + mailEps.length + cinemaEps.length;
 
   const showAll = search.trim() !== '';
   const show = (cat: CategoryId) => showAll || activeCategory === 'overview' || activeCategory === cat;
@@ -1266,7 +1304,7 @@ export default function Index() {
   );
 
   const isOverview = activeCategory === 'overview' && !search;
-  const allFilteredEmpty = showAll && [fChat, fImage, fMusic, fVoice, fAnime, fMedia, fSocial, fResearch, fFun, fMail].every((l) => l.length === 0);
+  const allFilteredEmpty = showAll && [fChat, fImage, fMusic, fVoice, fAnime, fMedia, fSocial, fResearch, fFun, fMail, fCinema].every((l) => l.length === 0);
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--canvas)', color: 'var(--text-primary)' }}>
@@ -1405,6 +1443,7 @@ export default function Index() {
           <CategorySection id="research" icon={Globe}         title="RESEARCH"  count={fResearch.length} description="WebPilot deep web research with cited sources"                                                                 endpoints={fResearch} onSuccess={onSuccess} visible={show('research')} />
           <CategorySection id="fun"      icon={Zap}           title="FUN"       count={fFun.length}     description="Truth · Dare · Pick-Up Lines · Random Facts — no parameters needed"                                           endpoints={fFun}     onSuccess={onSuccess} visible={show('fun')} />
           <CategorySection id="tempmail" icon={Mail}          title="TEMP MAIL" count={fMail.length}    description="Disposable email addresses via live GuerrillaMail integration"                                                endpoints={fMail}    onSuccess={onSuccess} visible={show('tempmail')} />
+          <CategorySection id="cinema"    icon={Clapperboard}  title="CINEMA"    count={fCinema.length}  description="Movie search · Full metadata inspector · Primary & mirror embed stream player — TMDB-powered"                      endpoints={fCinema}  onSuccess={onSuccess} visible={show('cinema')} />
 
           {/* No results */}
           {allFilteredEmpty && (
