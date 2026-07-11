@@ -58,6 +58,12 @@
     --badge-get-text: #ffffff;
     --badge-post-bg:  #1e3a8a;
     --badge-post-text:#ffffff;
+
+    /* Signal accent — used sparingly for focus, glow, active states */
+    --signal:         #6d5ef8;
+    --signal-soft:    rgba(109,94,248,0.10);
+    --signal-border:  rgba(109,94,248,0.30);
+    --signal-glow:    rgba(109,94,248,0.35);
   }
 
   /* ── Dark mode override ─────────────────────────────────── */
@@ -108,6 +114,11 @@
     --badge-get-text: #86efac;
     --badge-post-bg:  #1e3a8a;
     --badge-post-text:#93c5fd;
+
+    --signal:         #8b7bff;
+    --signal-soft:    rgba(139,123,255,0.12);
+    --signal-border:  rgba(139,123,255,0.35);
+    --signal-glow:    rgba(139,123,255,0.45);
   }
 }
 
@@ -120,25 +131,35 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    line-height: 1.6;
+    line-height: 1.65;
+    letter-spacing: -0.005em;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   code, pre, .mono {
     font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
   }
 
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  /* Visible, on-brand focus ring everywhere — accessibility + polish */
+  :focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.32); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--signal); }
   .dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.16); }
-  .dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
+  .dark ::-webkit-scrollbar-thumb:hover { background: var(--signal); }
 }
 
 @layer utilities {
   /* Pulse dot */
   .pulse-active { animation: pulseActive 2s ease-in-out infinite; }
+  .dark .pulse-active { animation-name: pulseActiveDark; }
 
   /* Typing cursor */
   .typing-cursor::after {
@@ -147,13 +168,60 @@
     color: rgba(0,0,0,0.3);
   }
   .dark .typing-cursor::after { color: rgba(255,255,255,0.4); }
+
+  /* ── Signal accent utilities (futuristic layer, used sparingly) ─────── */
+
+  /* Thin animated gradient rule — the page's signature underline */
+  .signal-rule {
+    height: 2px;
+    width: 64px;
+    background: linear-gradient(90deg, var(--signal) 0%, transparent 100%);
+    background-size: 200% 100%;
+    animation: sweepRule 3.2s ease-in-out infinite;
+  }
+
+  /* Card hover: subtle lift + violet glow, no border-radius change (keeps terminal identity) */
+  .glow-card {
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+  .glow-card:hover {
+    border-color: var(--signal-border) !important;
+    box-shadow: 0 0 0 1px var(--signal-border), 0 8px 28px -12px var(--signal-glow);
+  }
+
+  /* Faint circuit-grid backdrop, reusable anywhere (hero already has its own inline version) */
+  .circuit-grid {
+    background-image:
+      linear-gradient(currentColor 1px, transparent 1px),
+      linear-gradient(90deg, currentColor 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Scanning sweep line — a single deliberate motion accent, not scattered */
+  .scan-sweep {
+    position: relative;
+    overflow: hidden;
+  }
+  .scan-sweep::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 0%, var(--signal-soft) 48%, transparent 100%);
+    transform: translateY(-100%);
+    animation: scanSweep 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .text-signal { color: var(--signal); }
+  .border-signal { border-color: var(--signal-border) !important; }
+  .bg-signal-soft { background: var(--signal-soft); }
 }
 
 @keyframes pulseActive {
   0%, 100% { box-shadow: 0 0 0 0 rgba(5,150,105,0.55); opacity: 1; }
   50%       { box-shadow: 0 0 0 5px rgba(5,150,105,0); opacity: 0.8; }
 }
-.dark @keyframes pulseActive {
+@keyframes pulseActiveDark {
   0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.55); opacity: 1; }
   50%       { box-shadow: 0 0 0 5px rgba(16,185,129,0); opacity: 0.8; }
 }
@@ -173,5 +241,21 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes sweepRule {
+  0%, 100% { background-position: 0% 0; }
+  50%       { background-position: 100% 0; }
+}
+
+@keyframes scanSweep {
+  0%   { transform: translateY(-100%); }
+  50%  { transform: translateY(100%); }
+  100% { transform: translateY(100%); }
+}
+
 .fade-in-up { animation: fadeInUp 0.28s ease-out forwards; }
 .slide-down { animation: slideDown 0.2s ease-out forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-active, .typing-cursor::after, .signal-rule, .scan-sweep::after,
+  .fade-in-up, .slide-down { animation: none !important; }
+}
