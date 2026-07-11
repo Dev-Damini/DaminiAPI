@@ -7,8 +7,10 @@
 const express = require('express');
 const cors    = require('cors');
 const axios   = require('axios');
+const multer  = require('multer');
 
 const app = express();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
 
 app.use(cors());
 app.use(express.json());
@@ -24,9 +26,21 @@ const SOURCE_COBALT              = 'https://api.cobalt.tools';        // media d
 const SOURCE_INVIDIOUS           = 'https://invidious.snopyta.org';   // youtube alt
 const SOURCE_USELESSFACTS        = 'https://uselessfacts.jsph.pl';   // facts
 const SOURCE_OFFICIALJOKEAPI     = 'https://official-joke-api.appspot.com'; // jokes
-const SOURCE_MOVIE_DATA   = 'https://videodownloader.site';
+
+// Real TMDB (The Movie Database) — replaces the old broken "videodownloader.site" source.
+// Requires a free API key from https://www.themoviedb.org/settings/api — set TMDB_API_KEY
+// as an environment variable on Render. IDs used everywhere below are TMDB numeric IDs
+// (the same ID format already used by the stream/stream-mirror endpoints).
+const TMDB_API_KEY = process.env.TMDB_API_KEY || '';
+const SOURCE_TMDB  = 'https://api.themoviedb.org/3';
+const TMDB_IMG     = 'https://image.tmdb.org/t/p';
+
 const SOURCE_STREAM_PRIMARY = 'https://embed.su/embed/movie';
 const SOURCE_STREAM_MIRROR  = 'https://vidsrc.to/embed/movie';
+const SOURCE_STREAM_MIRROR2 = 'https://vidsrc.cc/v2/embed/movie';
+
+// Free, no-signup, open TTS voice engine (StreamElements public speech endpoint)
+const SOURCE_OPEN_TTS = 'https://api.streamelements.com/kappa/v2/speech';
 
 // Shared axios config
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -112,7 +126,7 @@ app.get('/', (req, res) => {
     status: 'online',
     service: 'Daminī Proxy Layer',
     developer: 'Dev Daminī',
-    endpoints: 36,
+    endpoints: 46,
   });
 });
 
@@ -576,6 +590,52 @@ app.get('/anime', async (req, res) => {
   }
 });
 
+// 19b. Anime Series Search  →  OmegaTech AnimeLovers search index
+app.get('/api/anime/anime-search', async (req, res) => {
+  try {
+    const query = req.query.q || req.query.query || req.query.name || '';
+    if (!query) return res.status(400).json({ success: false, error: 'Missing parameter: q' });
+    const upstream = await axios.get(`${SOURCE_OMEGA}/api/Anime/anime-search`, {
+      ...axiosOpts,
+      params: { query },
+    });
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Anime search index unreachable'));
+  } catch (err) {
+    sendCleanError(res, err, 'Anime search index unreachable');
+  }
+});
+
+// 19c. Anime Details  →  OmegaTech AnimeLovers (title, cover, genres, rating, episodes)
+app.get('/api/anime/anime-details', async (req, res) => {
+  try {
+    const slug = req.query.slug || req.query.q || '';
+    if (!slug) return res.status(400).json({ success: false, error: 'Missing parameter: slug' });
+    const upstream = await axios.get(`${SOURCE_OMEGA}/api/Anime/anime-details`, {
+      ...axiosOpts,
+      params: { slug },
+    });
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Anime details engine unreachable'));
+  } catch (err) {
+    sendCleanError(res, err, 'Anime details engine unreachable');
+  }
+});
+
+// 19d. Anime Episode Download / Stream Links  →  OmegaTech AnimeLovers
+app.get('/api/anime/anime-download', async (req, res) => {
+  try {
+    const slug = req.query.slug || '';
+    const quality = req.query.quality || '720p';
+    if (!slug) return res.status(400).json({ success: false, error: 'Missing parameter: slug' });
+    const upstream = await axios.get(`${SOURCE_OMEGA}/api/Anime/anime-download`, {
+      ...axiosOpts,
+      params: { slug, quality },
+    });
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Anime stream resolver unreachable'));
+  } catch (err) {
+    sendCleanError(res, err, 'Anime stream resolver unreachable');
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //   CATEGORY 5 — MEDIA DOWNLOADER LAYER  (David Cyril → Cobalt.tools)
 //   Cobalt is a free, open-source public media downloader API
@@ -786,44 +846,200 @@ app.get('/pickupline', async (req, res) => {
   }
 });
 // ═══════════════════════════════════════════════════════════════════════════════
-//   CATEGORY 7 — CINEMA & MOVIE TRACKING CORE
+//   CATEGORY 7 — TOOLS  (Screenshot engine + free open-voice TTS w/ file upload + audio transcribe)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 33. Movie Database Search Index
+// Shared handler: Website Screenshot Tool  →  OmegaTech ssweb (Microlink-backed)
+async function handleSsweb(req, res) {
+  try {
+    const url    = req.query.url    || req.body?.url    || '';
+    const device = req.query.device || req.body?.device || 'desktop';
+    const raw    = String(req.query.raw ?? req.body?.raw ?? 'false') === 'true';
+    if (!url) return res.status(400).json({ success: false, error: 'Missing parameter: url' });
+
+    const upstream = await axios.get(`${SOURCE_OMEGA}/api/tools/ssweb`, {
+      ...axiosOpts,
+      params: { action: 'screenshot', url, device, raw },
+      responseType: raw ? 'arraybuffer' : 'json',
+    });
+
+    if (raw) {
+      res.setHeader('Content-Type', upstream.headers['content-type'] || 'image/png');
+      return res.status(200).send(upstream.data);
+    }
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Screenshot capture engine down'));
+  } catch (err) {
+    sendCleanError(res, err, 'Screenshot capture engine down');
+  }
+}
+
+// 37. Website Screenshot Tool — GET
+app.get('/api/tools/ssweb', handleSsweb);
+// 37b. Website Screenshot Tool — POST (same engine, form-friendly)
+app.post('/api/tools/ssweb', handleSsweb);
+
+// 38. Free Open-Voice TTS  →  StreamElements public speech engine (no signup, no key)
+app.get('/api/tools/tts-free', async (req, res) => {
+  try {
+    const text  = String(req.query.text || req.query.q || '').trim().slice(0, 500);
+    const voice = req.query.voice || 'Brian';
+    if (!text) return res.status(400).json({ success: false, error: 'Missing parameter: text' });
+
+    const url = `${SOURCE_OPEN_TTS}?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(text)}`;
+    res.status(200).json(
+      scrubAndSanitise(
+        { success: true, url, voice, characters: text.length, provider: 'Daminī Open Voice Engine' },
+        'Open-source TTS engine unavailable'
+      )
+    );
+  } catch (err) {
+    sendCleanError(res, err, 'Open-source TTS engine unavailable');
+  }
+});
+
+// 39. Free Open-Voice TTS with File Upload  →  reads uploaded .txt file, synthesises speech
+app.post('/api/tools/tts-upload', upload.single('file'), async (req, res) => {
+  try {
+    let text = String(req.body?.text || '').trim();
+    if (req.file && req.file.buffer) {
+      text = req.file.buffer.toString('utf-8').trim();
+    }
+    text = text.slice(0, 500);
+    if (!text) {
+      return res.status(400).json({ success: false, error: 'No text content — upload a .txt file or provide the text field.' });
+    }
+    const voice = req.body?.voice || req.query.voice || 'Brian';
+    const url = `${SOURCE_OPEN_TTS}?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(text)}`;
+
+    res.status(200).json(
+      scrubAndSanitise(
+        {
+          success: true,
+          url,
+          voice,
+          characters: text.length,
+          source_file: req.file?.originalname || null,
+          provider: 'Daminī Open Voice Engine',
+        },
+        'Open-source TTS upload engine unavailable'
+      )
+    );
+  } catch (err) {
+    sendCleanError(res, err, 'Open-source TTS upload engine unavailable');
+  }
+});
+
+// 39b. Audio Transcribe  →  OmegaTech audio-transcribe (upstream identity hidden)
+async function handleAudioTranscribe(req, res) {
+  try {
+    const audioUrl = req.query.audioUrl || req.body?.audioUrl || req.query.url || req.body?.url || '';
+    const languageCode = req.query.languageCode || req.body?.languageCode || '';
+    const scenario = req.query.scenario || req.body?.scenario || 'auto';
+    if (!audioUrl) return res.status(400).json({ success: false, error: 'Missing parameter: audioUrl' });
+
+    const upstream = await axios.get(`${SOURCE_OMEGA}/api/tools/audio-transcribe`, {
+      ...axiosOpts,
+      params: { audioUrl, languageCode, scenario },
+    });
+
+    res.status(200).json(scrubAndSanitise(upstream.data, 'Audio transcription engine down'));
+  } catch (err) {
+    sendCleanError(res, err, 'Audio transcription engine down');
+  }
+}
+
+// 39c. Audio Transcribe — GET
+app.get('/api/tools/audio-transcribe', handleAudioTranscribe);
+// 39d. Audio Transcribe — POST (same engine, form-friendly)
+app.post('/api/tools/audio-transcribe', handleAudioTranscribe);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//   CATEGORY 8 — CINEMA & MOVIE TRACKING CORE  (real TMDB — fixes broken details)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// 40. Movie Database Search Index  →  Real TMDB /search/movie
 app.get('/api/cinema/search', async (req, res) => {
   try {
     const query = req.query.q || req.query.query || '';
-    const upstream = await axios.get(`${SOURCE_MOVIE_DATA}/search`, {
+    if (!query) return res.status(400).json({ success: false, error: 'Missing parameter: q' });
+    if (!TMDB_API_KEY) {
+      return res.status(503).json({
+        success: false,
+        error: 'TMDB_API_KEY is not configured on the server. Get a free key at themoviedb.org/settings/api and set it as an env var on Render.',
+        provider: 'Daminī Cinema Engine',
+      });
+    }
+
+    const upstream = await axios.get(`${SOURCE_TMDB}/search/movie`, {
       ...axiosOpts,
-      params: { q: query, type: 'movie' },
+      params: { api_key: TMDB_API_KEY, query, include_adult: false },
     });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Movie cluster search node unreachable'));
+
+    const results = (upstream.data?.results || []).map((m) => ({
+      tmdb_id: m.id,
+      title: m.title,
+      release_date: m.release_date,
+      overview: m.overview,
+      rating: m.vote_average,
+      poster: m.poster_path ? `${TMDB_IMG}/w500${m.poster_path}` : null,
+    }));
+
+    res.status(200).json(
+      scrubAndSanitise({ success: true, query, results, provider: 'Daminī Cinema Engine' }, 'Movie cluster search node unreachable')
+    );
   } catch (err) {
     sendCleanError(res, err, 'Movie cluster search node unreachable');
   }
 });
 
-// 34. Detailed Structural Asset Inventory
+// 41. Detailed Structural Asset Inventory  →  Real TMDB /movie/{tmdb_id}
 app.get('/api/cinema/details', async (req, res) => {
   try {
-    const subjectId = req.query.id || req.query.subject_id || '';
-    const upstream = await axios.get(`${SOURCE_MOVIE_DATA}/details`, {
+    const tmdbId = req.query.id || req.query.tmdb_id || req.query.subject_id || '';
+    if (!tmdbId) return res.status(400).json({ success: false, error: 'Missing parameter: id (TMDB ID)' });
+    if (!TMDB_API_KEY) {
+      return res.status(503).json({
+        success: false,
+        error: 'TMDB_API_KEY is not configured on the server. Get a free key at themoviedb.org/settings/api and set it as an env var on Render.',
+        provider: 'Daminī Cinema Engine',
+      });
+    }
+
+    const upstream = await axios.get(`${SOURCE_TMDB}/movie/${tmdbId}`, {
       ...axiosOpts,
-      params: { subject_id: subjectId },
+      params: { api_key: TMDB_API_KEY, append_to_response: 'credits' },
     });
-    res.status(200).json(scrubAndSanitise(upstream.data, 'Asset metrics query failure'));
+
+    const m = upstream.data;
+    const clean = {
+      tmdb_id: m.id,
+      title: m.title,
+      original_title: m.original_title,
+      overview: m.overview,
+      genres: (m.genres || []).map((g) => g.name),
+      cast: (m.credits?.cast || []).slice(0, 8).map((c) => c.name),
+      rating: m.vote_average,
+      runtime: m.runtime,
+      release_date: m.release_date,
+      poster: m.poster_path ? `${TMDB_IMG}/w780${m.poster_path}` : null,
+      backdrop: m.backdrop_path ? `${TMDB_IMG}/original${m.backdrop_path}` : null,
+    };
+
+    res.status(200).json(
+      scrubAndSanitise({ success: true, data: clean, provider: 'Daminī Cinema Engine' }, 'Asset metrics query failure')
+    );
   } catch (err) {
     sendCleanError(res, err, 'Asset metrics query failure');
   }
 });
 
-// 35. Primary Stream Frame Player Engine (Returns URL for Frontend Iframes)
+// 42. Primary Stream Frame Player Engine (Returns URL for Frontend Iframes)
 app.get('/api/cinema/stream', (req, res) => {
   const tmdbId = req.query.tmdb_id || req.query.id || '';
   if (!tmdbId) {
     return res.status(400).json({ success: false, error: 'Missing parameter: tmdb_id' });
   }
-  
+
   // Directly masks upstream identities while constructing clean responses
   res.status(200).json({
     success: true,
@@ -833,16 +1049,31 @@ app.get('/api/cinema/stream', (req, res) => {
   });
 });
 
-// 36. Alternative Mirror Cinema Frame Player
+// 43. Alternative Mirror Cinema Frame Player
 app.get('/api/cinema/stream-mirror', (req, res) => {
   const tmdbId = req.query.tmdb_id || req.query.id || '';
   if (!tmdbId) {
     return res.status(400).json({ success: false, error: 'Missing parameter: tmdb_id' });
   }
-  
+
   res.status(200).json({
     success: true,
     streamUrl: `${SOURCE_STREAM_MIRROR}/${tmdbId}`,
+    provider: 'Daminī Cinema Engine',
+    owner: 'Dev Daminī'
+  });
+});
+
+// 44. Second Mirror Cinema Frame Player (extra redundancy when both above are down)
+app.get('/api/cinema/stream-mirror2', (req, res) => {
+  const tmdbId = req.query.tmdb_id || req.query.id || '';
+  if (!tmdbId) {
+    return res.status(400).json({ success: false, error: 'Missing parameter: tmdb_id' });
+  }
+
+  res.status(200).json({
+    success: true,
+    streamUrl: `${SOURCE_STREAM_MIRROR2}/${tmdbId}`,
     provider: 'Daminī Cinema Engine',
     owner: 'Dev Daminī'
   });
